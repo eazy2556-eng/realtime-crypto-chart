@@ -293,7 +293,10 @@ button{cursor:pointer;background:none;border:0;padding:0}
 @media (max-width:900px){
   html,body{height:auto}
   body{overflow:auto}
-  .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:48px auto 74vh auto;grid-template-areas:"top" "tools" "chart" "side"}
+  .app{height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:48px auto auto auto;grid-template-areas:"top" "tools" "chart" "side"}
+  /* 휴대폰: 메인 차트는 화면의 58%, 지표 창은 그 아래로 쌓고 페이지 전체가 스크롤 */
+  .chart-area{overflow:visible}
+  .main-pane{flex:none;height:58vh;min-height:300px}
   .tools{flex-direction:row;padding:4px 8px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
   .hsep{width:1px;height:22px;margin:0 4px}
   .side{border-left:0;border-top:1px solid var(--line);overflow:visible}
