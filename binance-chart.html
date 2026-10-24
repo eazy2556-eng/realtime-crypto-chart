@@ -374,6 +374,24 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .seg button{height:30px;padding:0 12px;font-size:12px;color:var(--muted)}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+/* 설정 옮기기 */
+.sync-card{width:min(560px,100%)}
+.sync-body{padding:0 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.sync-sec{display:flex;flex-direction:column;gap:8px}
+.sync-sec+.sync-sec{border-top:1px solid var(--line);padding-top:16px}
+.sync-sec h3{margin:0;font-size:14px;font-weight:600}
+.sync-sum{margin:0;font-size:13px;color:var(--fg)}
+.sync-hint,.sync-warn{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+.sync-warn{color:var(--warn)}
+.sync-arrive{margin:0;font-weight:600}
+.sync-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sync-code{width:100%;height:auto;padding:8px;font-family:var(--mono);font-size:11px;resize:vertical;word-break:break-all}
+.sync-qr{align-self:center;background:#fff;color:#131722;padding:12px;border-radius:8px;text-align:center;width:min(300px,100%)}
+.sync-qr svg{display:block;width:100%;height:auto}
+.sync-qr p{margin:6px 0 0;font-size:12px}
+.sync-confirm{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
+.file-btn{position:relative;display:inline-flex;align-items:center;cursor:pointer}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
 /* 스토캐스틱 3중: 칸별 이름표와 값 */
 .band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
 .band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
@@ -405,6 +423,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
     <button type="button" class="conn" id="conn" data-state="connecting" data-pop="latPop" aria-haspopup="true" aria-expanded="false" title="연결 상태와 지연 시간">
       <i></i><span class="conn-text">연결 중…</span><span class="conn-lat" id="connLat"></span>
     </button>
+    <button type="button" class="icon-btn" id="syncBtn" aria-label="다른 기기로 설정 옮기기" title="다른 기기로 설정 옮기기 (휴대폰 등)"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3" width="9" height="7" rx="1"/><path d="M4 13h4"/><rect x="12" y="5" width="4.5" height="9" rx="1"/><path d="M7 6.5h6M11.5 5l1.5 1.5-1.5 1.5"/></svg></button>
     <button type="button" class="icon-btn" id="themeBtn" aria-label="밝은 테마로 전환" title="테마 전환"></button>
   </header>
 
@@ -539,6 +558,15 @@ button{cursor:pointer;background:none;border:0;padding:0}
     </div>
     <form class="set-form" id="setForm"></form>
     <div class="modal-actions"><button type="button" class="btn-ghost" id="setReset">기본값으로</button><button type="button" class="btn-primary" data-close="setDlg">완료</button></div>
+  </div>
+</div>
+<div class="modal top" id="syncDlg" hidden>
+  <div class="modal-card sync-card" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+    <div class="modal-head">
+      <h2 id="syncTitle">다른 기기로 설정 옮기기</h2>
+      <button type="button" class="icon-btn" data-close="syncDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="sync-body" id="syncBody"></div>
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -3718,13 +3746,13 @@ $('#symBtn').addEventListener('click', () => openSearch('open', ''));
 $('#addWatch').addEventListener('click', () => openSearch('add', ''));
 
 // ───────── 모달 공통 · 단축키 ─────────
-function closeModal(id) { if (id === 'search') closeSearch(); else $('#' + id).hidden = true; }
+function closeModal(id) { if (id === 'search') closeSearch(); else $('#' + id).hidden = true; if (id === 'syncDlg') clearHash(); }
 $$('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
 $$('.modal').forEach(m => m.addEventListener('pointerdown', e => { if (e.target === m) closeModal(m.id); }));
 $('#toRT').addEventListener('click', () => chart.timeScale().scrollToRealTime());
 $('#retryBtn').addEventListener('click', () => load(prefs.sym, prefs.interval));
 document.addEventListener('keydown', e => {
-  const open = ['setDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
+  const open = ['setDlg', 'syncDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
   if (open) { if (e.key === 'Escape') { e.preventDefault(); closeModal(open); } return; }
   const t = e.target, typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   if (typing) return;
@@ -3754,6 +3782,181 @@ setTab(prefs.tab);
 renderWatch(); fetchWatchInit();
 rebuildIndicators();
 load(prefs.sym, prefs.interval);
+
+// ───────── 다른 기기로 설정 옮기기 ─────────
+// 설정(지표·관심 종목·작도·수평선·화면 배치)을 압축해 링크 '#s=…' 또는 파일로 주고받는다.
+// '#' 뒤는 서버로 전송되지 않으므로 설정 내용이 GitHub에 남지 않는다.
+const PUBLIC_URL = 'https://eazy2556-eng.github.io/realtime-crypto-chart/binance-chart.html';
+const SYNC_KEY_RE = /^[A-Za-z0-9:._-]{1,60}$/;
+function collectBundle() {
+  savePrefs();
+  const b = { v: 1, at: Date.now(), prefs: store.get('bc:prefs', prefs), dw: {}, hl: {} };
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i), m = /^bc:(dw|hl):(.+)$/.exec(k);
+      if (!m) continue;
+      const v = store.get(k, []);
+      if (Array.isArray(v) && v.length) b[m[1]][m[2]] = v;
+    }
+  } catch {}
+  return b;
+}
+function b64u(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function unb64u(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  return Uint8Array.from(atob(s + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+}
+async function encodeBundle(b) {
+  const raw = new TextEncoder().encode(JSON.stringify(b));
+  if (window.CompressionStream) {
+    const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+    return 'BC1.' + b64u(z);
+  }
+  return 'BC0.' + b64u(raw);
+}
+async function decodeBundle(text) {
+  text = String(text || '').trim();
+  let obj;
+  if (text.startsWith('{')) obj = JSON.parse(text); // 파일
+  else {
+    const m = /(BC[01])\.([A-Za-z0-9_-]+)/.exec(text);
+    if (!m) throw new Error('설정 링크나 코드가 아니에요');
+    let bytes = unb64u(m[2]);
+    if (m[1] === 'BC1') {
+      if (!window.DecompressionStream) throw new Error('이 브라우저는 압축된 설정을 풀 수 없어요. 파일로 옮겨 주세요');
+      bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    }
+    obj = JSON.parse(new TextDecoder().decode(bytes));
+  }
+  if (!obj || obj.v !== 1 || !obj.prefs || typeof obj.prefs !== 'object') throw new Error('알아볼 수 없는 설정이에요');
+  const clean = (src, fn) => { const o = {}; if (src && typeof src === 'object') for (const [k, v] of Object.entries(src)) if (SYNC_KEY_RE.test(k) && Array.isArray(v)) o[k] = fn(v); return o; };
+  obj.dw = clean(obj.dw, list => list.filter(d => d && DW_TOOLS[d.type] && Array.isArray(d.pts) && d.pts.every(p => p && isN(p.t) && isN(p.p))).slice(0, 500).map(d => ({
+    id: String(d.id || newUid()).slice(0, 20), type: d.type, pts: d.pts.slice(0, 4).map(p => ({ t: p.t, p: p.p })),
+    color: d.color === 'fg' || /^#[0-9a-f]{6}$/i.test(d.color) ? d.color : '#2962ff', w: [1, 2, 3, 4].includes(d.w) ? d.w : 1,
+    ...(d.type === 'text' ? { text: String(d.text || '').slice(0, 120) } : {}),
+  })));
+  obj.hl = clean(obj.hl, list => list.filter(isN).slice(0, 200));
+  return obj;
+}
+function bundleSummary(b) {
+  const p = b.prefs, dwN = Object.values(b.dw).reduce((a, l) => a + l.length, 0), hlN = Object.values(b.hl).reduce((a, l) => a + l.length, 0);
+  const parts = [`지표 ${Array.isArray(p.inds) ? p.inds.length : 0}개`, `관심 종목 ${Array.isArray(p.watch) ? p.watch.length : 0}개`];
+  if (dwN) parts.push(`작도 ${dwN}개 (종목 ${Object.keys(b.dw).length}개)`);
+  if (hlN) parts.push(`수평선 ${hlN}개`);
+  parts.push('시간 단위·지표 창 배치·테마');
+  return parts.join(' · ');
+}
+const fmtWhen = t => { const d = new Date(t); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+let syncOut = null, syncIn = null;
+function syncHTML() {
+  return `<section class="sync-sec">
+      <h3>이 기기 설정 보내기</h3>
+      <p class="sync-sum" id="syncSum"></p>
+      <div class="sync-actions"><button type="button" class="btn-primary" id="syncCopy">링크 복사</button><button type="button" class="btn-ghost" id="syncQr">QR 코드</button><button type="button" class="btn-ghost" id="syncFile">파일로 저장</button></div>
+      <div class="sync-qr" id="syncQrBox" hidden></div>
+      <textarea class="field sync-code" id="syncCode" readonly aria-label="설정 링크" rows="3"></textarea>
+      <p class="sync-hint">휴대폰에서: 복사한 링크를 카카오톡 "나에게 보내기"로 보내서 누르거나, 휴대폰 카메라로 QR 코드를 찍으세요. 확인을 누르면 그 기기 설정이 이 기기와 똑같아져요.</p>
+    </section>
+    <section class="sync-sec">
+      <h3>받은 설정 적용하기</h3>
+      <textarea class="field sync-code" id="syncInput" rows="3" placeholder="받은 링크나 코드를 붙여 넣으세요" aria-label="받은 설정 링크"></textarea>
+      <div class="sync-actions"><button type="button" class="btn-primary" id="syncRead">읽기</button><label class="btn-ghost file-btn">파일 열기<input type="file" id="syncFileIn" accept=".json,application/json"></label></div>
+      <div class="sync-confirm" id="syncConfirm" hidden></div>
+    </section>`;
+}
+async function openSync(incoming) {
+  closePops();
+  $('#syncBody').innerHTML = syncHTML();
+  $('#syncDlg').hidden = false;
+  const b = collectBundle();
+  $('#syncSum').textContent = bundleSummary(b);
+  const base = /^https?:$/.test(location.protocol) && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1' ? location.origin + location.pathname : PUBLIC_URL;
+  const code = await encodeBundle(b);
+  syncOut = { link: `${base}#s=${code}`, code, b };
+  $('#syncCode').value = syncOut.link;
+  if (incoming) { $('#syncInput').value = incoming; await readIncoming(incoming, true); }
+}
+async function readIncoming(text, fromLink) {
+  const box = $('#syncConfirm');
+  box.hidden = false;
+  try {
+    syncIn = await decodeBundle(text);
+    box.innerHTML = `<p class="sync-arrive">${fromLink ? '보낸 설정이 도착했어요.' : '설정을 읽었어요.'} <span class="muted">(${fmtWhen(syncIn.at || Date.now())}에 만든 설정)</span></p>
+      <p class="sync-sum">${esc(bundleSummary(syncIn))}</p>
+      <p class="sync-warn">적용하면 이 기기의 지금 설정(지표·관심 종목·작도)이 이 내용으로 바뀌어요.</p>
+      <div class="sync-actions"><button type="button" class="btn-primary" id="syncApply">이 설정으로 바꾸기</button><button type="button" class="btn-ghost" id="syncCancel">취소</button></div>`;
+    if (fromLink) box.scrollIntoView({ block: 'nearest' });
+  } catch (e) {
+    syncIn = null;
+    box.innerHTML = `<p class="sync-warn">읽지 못했어요: ${esc(e.message)}</p>`;
+  }
+}
+function applyBundle(b) {
+  try {
+    const rm = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^bc:(dw|hl):/.test(k)) rm.push(k); }
+    rm.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem('bc:prefs', JSON.stringify(b.prefs));
+    for (const [k, v] of Object.entries(b.dw)) localStorage.setItem('bc:dw:' + k, JSON.stringify(v));
+    for (const [k, v] of Object.entries(b.hl)) localStorage.setItem('bc:hl:' + k, JSON.stringify(v));
+  } catch {
+    toast('이 브라우저에 설정을 저장하지 못했어요. 사생활 보호(시크릿) 모드인지 확인하세요.', 'err');
+    return;
+  }
+  history.replaceState(null, '', location.pathname + location.search);
+  location.reload();
+}
+function clearHash() { if (/^#s=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search); }
+async function copyText(text, area) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { area.focus(); area.select(); try { return document.execCommand('copy'); } catch { return false; } }
+}
+let qrLib = null;
+function loadQrLib() {
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  return qrLib || (qrLib = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    s.onload = () => res(window.qrcode); s.onerror = () => { qrLib = null; rej(new Error('QR 도구를 불러오지 못했어요')); };
+    document.head.append(s);
+  }));
+}
+$('#syncBody').addEventListener('click', async e => {
+  const b = e.target.closest('button');
+  if (!b || !syncOut) return;
+  if (b.id === 'syncCopy') { const ok = await copyText(syncOut.link, $('#syncCode')); toast(ok ? '링크를 복사했어요. 휴대폰으로 보내서 열어 보세요.' : '복사하지 못했어요. 아래 칸의 링크를 직접 복사하세요.', ok ? 'info' : 'err'); }
+  else if (b.id === 'syncQr') {
+    const box = $('#syncQrBox');
+    box.hidden = false; box.textContent = 'QR 코드 만드는 중…';
+    try {
+      const qr = (await loadQrLib())(0, 'L');
+      qr.addData(syncOut.link); qr.make();
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true }) + '<p>휴대폰 카메라로 찍으세요</p>';
+    } catch (err) { box.textContent = /overflow|too long|length/i.test(String(err && err.message || err)) ? '설정이 많아 QR 코드에 다 담기지 않아요. 링크 복사나 파일로 옮겨 주세요.' : (err.message || 'QR 코드를 만들지 못했어요.'); }
+  } else if (b.id === 'syncFile') {
+    const blob = new Blob([JSON.stringify(syncOut.b, null, 1)], { type: 'application/json' }), d = new Date();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `실시간차트-설정-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast('설정 파일을 저장했어요.');
+  } else if (b.id === 'syncRead') await readIncoming($('#syncInput').value, false);
+  else if (b.id === 'syncApply' && syncIn) applyBundle(syncIn);
+  else if (b.id === 'syncCancel') { syncIn = null; $('#syncConfirm').hidden = true; clearHash(); }
+});
+$('#syncBody').addEventListener('change', async e => {
+  if (e.target.id !== 'syncFileIn' || !e.target.files[0]) return;
+  await readIncoming(await e.target.files[0].text(), false);
+});
+$('#syncBtn').addEventListener('click', () => openSync());
+$('#syncDlg').addEventListener('pointerdown', e => { if (e.target.id === 'syncDlg') clearHash(); });
+$$('[data-close="syncDlg"]').forEach(b => b.addEventListener('click', clearHash));
+// 받은 링크로 열었으면 바로 확인 창
+if (/^#s=/.test(location.hash)) openSync(location.hash.slice(3));
 
 })();
 </script>
