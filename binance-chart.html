@@ -411,6 +411,51 @@ button{cursor:pointer;background:none;border:0;padding:0}
 #clMsg:empty{display:none}
 #clMsg.bad{color:var(--down)}
 .cloud-bar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:58;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 12px;border-radius:10px;background:var(--raise);border:1px solid var(--accent);box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+/* 트레이딩뷰식 추가 기능 */
+.tz-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 8px;border-radius:6px;font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
+.tz-btn:hover,.tz-btn[aria-expanded="true"]{background:var(--raise-2);color:var(--fg)}
+#tzClock{font-variant-numeric:tabular-nums;color:var(--fg)}
+.tz-pop{max-height:min(72vh,600px);overflow-y:auto;width:290px}
+.tz-item b{font-weight:600;min-width:62px;font-variant-numeric:tabular-nums}
+.bc-list{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;padding:2px 10px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.bc-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.bc-row b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+.bc-row.on span,.bc-row.on b{color:var(--accent);font-weight:600}
+.tz-item .muted{font-size:12px;white-space:normal}
+.goto-pop{width:300px}
+.goto-form{display:flex;gap:6px;padding:4px 8px}
+.goto-form .field{flex:1;min-width:0;color-scheme:dark}
+[data-theme="light"] .goto-form .field{color-scheme:light}
+.cs-card{width:min(500px,100%)}
+.cs-body{padding:0 18px 18px;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:16px}
+.cs-sec{display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+.cs-sec+.cs-sec{border-top:1px solid var(--line);padding-top:14px}
+.cs-sec h3{margin:0;font-size:14px;font-weight:600}
+.cs-sec .seg{flex-wrap:wrap;max-width:100%}
+.cs-sec select{width:100%}
+.cs-colors{display:flex;gap:18px}
+.cs-chk{display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer;line-height:1.4}
+.cs-chk input{width:16px;height:16px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.cs-chk small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+@media (max-width:640px){#tzClock{display:none}.tz-btn{padding:0 6px}}
+.dw-bar .wbtn{white-space:nowrap}
+.lg-cmp{display:flex;flex-wrap:wrap;gap:4px 8px;pointer-events:auto}
+.lg-cmp[hidden]{display:none}
+.cmp-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:var(--raise);border-radius:4px;padding:1px 2px 1px 6px}
+.cmp-chip i{width:8px;height:8px;border-radius:50%;flex:none}
+.cmp-chip em{font-style:normal;color:var(--down);font-size:11px}
+.cmp-chip button{width:18px;height:18px;display:grid;place-items:center;border-radius:3px;color:var(--muted)}
+.cmp-chip button:hover{background:var(--raise-2);color:var(--fg)}
+.cmp-chip button svg{width:11px;height:11px}
+.rp-bar{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--raise);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 16px);overflow-x:auto}
+.rp-bar[hidden]{display:none}
+.rp-bar .icon-btn{width:30px;height:30px}
+.rp-bar .icon-btn svg{width:15px;height:15px}
+.rp-bar .seg button{height:26px;padding:0 8px}
+.rp-tag{font-size:11px;font-weight:600;color:#fff;background:var(--accent);border-radius:4px;padding:2px 6px}
+.rp-time{font-size:12px;font-weight:600}
+.rp-left{font-size:11px}
+.rp-exit{height:28px;padding:0 10px}
 /* 스토캐스틱 3중: 칸별 이름표와 값 */
 .band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
 .band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
@@ -438,10 +483,17 @@ button{cursor:pointer;background:none;border:0;padding:0}
       <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13c2.5 0 3-8 6-8s3 6 5.5 6S15.5 7 16 6"/></svg>
       <span>지표</span>
     </button>
+    <button type="button" class="tb-btn" id="cmpBtn" title="다른 종목과 비교 — 다른 거래소 종목도 돼요 (퍼센트로 겹쳐 그림)">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13l4-4 3 2 6-6"/><path d="M2 15.5h14M11 5h4v4" opacity=".55"/></svg>
+      <span>비교</span>
+    </button>
     <span class="grow"></span>
     <button type="button" class="conn" id="conn" data-state="connecting" data-pop="latPop" aria-haspopup="true" aria-expanded="false" title="연결 상태와 지연 시간">
       <i></i><span class="conn-text">연결 중…</span><span class="conn-lat" id="connLat"></span>
     </button>
+    <button type="button" class="tz-btn" id="tzBtn" data-pop="tzPop" aria-haspopup="true" aria-expanded="false" title="시계 · 시간 단위별 봉 마감 시간 · 시간대 (UTC 등)"><span id="tzClock" class="num"></span><span id="tzLbl"></span></button>
+    <button type="button" class="icon-btn" id="chartSetBtn" aria-label="차트 설정" title="차트 설정 — 캔들 색, 봉 마감 시간, 거래량 프로파일, 가격 축, 시간대"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h7M13 5h2M3 13h2M8 13h7"/><circle cx="11.5" cy="5" r="1.6"/><circle cx="6.5" cy="13" r="1.6"/><path d="M3 9h3M9 9h6"/><circle cx="7.5" cy="9" r="1.6"/></svg></button>
+    <button type="button" class="icon-btn" id="fsBtn" aria-label="전체 화면" title="전체 화면"></button>
     <button type="button" class="icon-btn" id="syncBtn" aria-label="다른 기기로 설정 옮기기" title="다른 기기로 설정 옮기기 (휴대폰 등)"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3" width="9" height="7" rx="1"/><path d="M4 13h4"/><rect x="12" y="5" width="4.5" height="9" rx="1"/><path d="M7 6.5h6M11.5 5l1.5 1.5-1.5 1.5"/></svg></button>
     <button type="button" class="icon-btn" id="themeBtn" aria-label="밝은 테마로 전환" title="테마 전환"></button>
   </header>
@@ -456,9 +508,11 @@ button{cursor:pointer;background:none;border:0;padding:0}
         <div class="lg-vals" id="lgVals">
           <span>시 <b id="lgO"></b></span><span>고 <b id="lgH"></b></span><span>저 <b id="lgL"></b></span><span>종 <b id="lgC"></b></span><span><b id="lgChg"></b></span>
         </div>
+        <div class="lg-cmp" id="lgCmp" hidden></div>
         <div class="lg-inds" id="lgInds"></div>
       </div>
       <div class="draw-hint" id="drawHint" hidden></div>
+      <div class="rp-bar" id="rpBar" hidden role="toolbar" aria-label="바 리플레이"></div>
       <div class="dw-bar" id="dwBar" hidden role="toolbar" aria-label="선택한 도형"></div>
       <form class="dw-text" id="dwText" hidden>
         <input class="field" id="dwTextIn" type="text" maxlength="120" placeholder="메모 입력" aria-label="텍스트 내용" autocomplete="off">
@@ -522,6 +576,12 @@ button{cursor:pointer;background:none;border:0;padding:0}
 <div class="pop tool-pop" id="toolPop" role="menu" aria-label="작도 도구 목록" hidden></div>
 <div class="pop lat-pop" id="latPop" aria-label="지연 시간" hidden></div>
 <div class="pop move-pop" id="movePop" role="menu" aria-label="지표 위치 옮기기" hidden></div>
+<div class="pop tz-pop" id="tzPop" role="menu" aria-label="시간대" hidden></div>
+<div class="pop goto-pop" id="gotoPop" aria-label="날짜로 이동" hidden>
+  <div class="pop-title">날짜로 이동 · <span id="gotoTz"></span></div>
+  <form class="goto-form" id="gotoForm"><input type="datetime-local" class="field" id="gotoIn" required aria-label="이동할 날짜와 시간"><button type="submit" class="btn-primary">이동</button></form>
+  <p class="pop-hint">지금 받아 둔 것보다 예전이면 거래소에서 더 받아 와요. 봉 2만 개까지 (1분봉은 약 2주).</p>
+</div>
 <div class="drag-ghost" id="dragGhost" hidden></div>
 <div class="drop-mark" id="dropMark" hidden></div>
 
@@ -579,6 +639,15 @@ button{cursor:pointer;background:none;border:0;padding:0}
     <div class="modal-actions"><button type="button" class="btn-ghost" id="setReset">기본값으로</button><button type="button" class="btn-primary" data-close="setDlg">완료</button></div>
   </div>
 </div>
+<div class="modal top" id="chartDlg" hidden>
+  <div class="modal-card cs-card" role="dialog" aria-modal="true" aria-labelledby="chartTitle">
+    <div class="modal-head">
+      <h2 id="chartTitle">차트 설정</h2>
+      <button type="button" class="icon-btn" data-close="chartDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="cs-body" id="chartBody"></div>
+  </div>
+</div>
 <div class="modal top" id="syncDlg" hidden>
   <div class="modal-card sync-card" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
     <div class="modal-head">
@@ -609,7 +678,10 @@ if (!LC) {
 // ───────── 설정 ─────────
 const REST = ['https://api.binance.com', 'https://data-api.binance.vision'];
 const WSS = ['wss://stream.binance.com:9443/stream', 'wss://stream.binance.com:443/stream', 'wss://data-stream.binance.vision/stream'];
-const TZ = -new Date().getTimezoneOffset() * 60; // 차트 시간을 내 PC 시간대(한국이면 KST)로 표시
+let TZ = -new Date().getTimezoneOffset() * 60; // 차트에 쓰는 시간대(초). 설정에서 고른 시간대로 바뀐다 (기본: 내 기기 시간대)
+const tzOffsetOf = v => v === 'utc' ? 0 : /^[+-]\d{1,2}(\.\d+)?$/.test(v || '') ? Math.round(parseFloat(v) * 3600) : -new Date().getTimezoneOffset() * 60;
+const tzLabelOf = off => off === 0 ? 'UTC' : `UTC${off > 0 ? '+' : '-'}${Math.floor(Math.abs(off) / 3600)}${Math.abs(off) % 3600 ? ':' + String(Math.abs(off) % 3600 / 60).padStart(2, '0') : ''}`;
+const zDate = ms => new Date(ms + TZ * 1000); // getUTC…로 읽으면 고른 시간대의 시각
 const DAY = 864e5;
 
 // ───────── 시간 단위 ─────────
@@ -1246,16 +1318,19 @@ function normalizePanes() {
 const SID_RE = /^(binance|bitget|okx):(spot|perp):[A-Za-z0-9._-]{2,40}$/;
 const EXTRA_WATCH = ['binance:perp:BTCUSDT', 'bitget:perp:BTCUSDT', 'okx:perp:BTC-USDT-SWAP'];
 const DEFAULTS = {
-  sym: 'binance:spot:BTCUSDT', interval: '1m', type: 'candle', log: false, theme: 'dark', tab: 'trades',
+  sym: 'binance:spot:BTCUSDT', interval: '1m', type: 'candle', scale: 'n', invert: false, theme: 'dark', tab: 'trades',
+  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [],
   watch: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'TRXUSDT', 'LINKUSDT', 'AVAXUSDT'].map(s => 'binance:spot:' + s).concat(EXTRA_WATCH),
   favIv: DEFAULT_FAV, customIv: [], magnet: false, keepTool: false, hideDw: false, toolPick: {},
   v: 2, panes: [], paneH: {},
 };
-const TYPES_IDS = ['candle', 'hollow', 'heikin', 'bar', 'line', 'area'];
+const TYPES_IDS = ['candle', 'hollow', 'heikin', 'bar', 'line', 'step', 'markers', 'area', 'baseline'];
 const prefs = (() => {
   const s = store.get('bc:prefs', null) || {};
   const p = JSON.parse(JSON.stringify(DEFAULTS));
   Object.assign(p, s);
+  if (!s.scale && s.log) p.scale = 'log'; // 예전 로그 스케일 설정
+  delete p.log;
   if (!Array.isArray(s.inds)) { // 예전 버전 설정 옮기기
     const o = s.ind;
     if (o && typeof o === 'object') {
@@ -1294,11 +1369,15 @@ const prefs = (() => {
   if (p.theme !== 'light') p.theme = 'dark';
   if (p.tab !== 'book') p.tab = 'trades';
   if (!p.toolPick || typeof p.toolPick !== 'object') p.toolPick = {};
+  if (!['n', 'log', 'pct', 'idx'].includes(p.scale)) p.scale = 'n';
+  p.cmp = (Array.isArray(p.cmp) ? p.cmp : []).filter((x, i, a) => SID_RE.test(x) && a.indexOf(x) === i).slice(0, 3);
+  for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
   return p;
 })();
 const SYNC = { onChange: null }; // 자동 연동이 설정 변경을 알아채는 곳
 const savePrefs = () => { store.set('bc:prefs', prefs); if (SYNC.onChange) SYNC.onChange(); };
 normalizePanes();
+TZ = tzOffsetOf(prefs.tz);
 let spec = parseIv(prefs.interval);
 
 // ───────── 상태 ─────────
@@ -1365,14 +1444,22 @@ function readColors() {
   C = { bg: g('--bg'), fg: g('--fg'), muted: g('--muted'), line: g('--line'), grid: g('--grid'), up: g('--up'), down: g('--down'), raise: g('--raise'),
     upVol: g('--up-vol'), downVol: g('--down-vol'), accent: g('--accent'), cross: g('--cross'), crossLabel: g('--cross-label'), wm: g('--watermark') };
 }
-function applyTheme() { document.documentElement.dataset.theme = prefs.theme; readColors(); }
+function applyTheme() {
+  const r = document.documentElement;
+  r.dataset.theme = prefs.theme;
+  for (const [k, v] of [['up', prefs.upC], ['down', prefs.dnC]]) { // 캔들 색을 바꿨으면 화면 전체의 상승·하락 색도 같이
+    if (v) { r.style.setProperty('--' + k, v); r.style.setProperty(`--${k}-vol`, hexA(v, .45)); r.style.setProperty(`--${k}-soft`, hexA(v, .15)); }
+    else for (const x of ['', '-vol', '-soft']) r.style.removeProperty('--' + k + x);
+  }
+  readColors();
+}
 function baseOptions() {
   return {
     autoSize: true,
     layout: { background: { type: 'solid', color: C.bg }, textColor: C.muted, fontSize: 11, fontFamily: '"IBM Plex Sans KR", -apple-system, "Segoe UI", "Malgun Gothic", sans-serif' },
-    grid: { vertLines: { color: C.grid }, horzLines: { color: C.grid } },
+    grid: { vertLines: { color: C.grid, visible: prefs.grid }, horzLines: { color: C.grid, visible: prefs.grid } },
     crosshair: {
-      mode: LC.CrosshairMode.Normal,
+      mode: prefs.cross === 'magnet' ? LC.CrosshairMode.Magnet : LC.CrosshairMode.Normal,
       vertLine: { color: C.cross, width: 1, style: LC.LineStyle.Dashed, labelBackgroundColor: C.crossLabel },
       horzLine: { color: C.cross, width: 1, style: LC.LineStyle.Dashed, labelBackgroundColor: C.crossLabel },
     },
@@ -1385,7 +1472,7 @@ function baseOptions() {
 }
 let cur = null; // 지금 보는 종목 { sid, vk, V(거래소), native, title, ... }
 const wmText = () => cur ? `${EX_TV[cur.ex]}:${cur.title} · ${spec.label}` : '';
-const mainOptions = () => Object.assign(baseOptions(), { watermark: { visible: true, text: wmText(), fontSize: 52, color: C.wm, horzAlign: 'center', vertAlign: 'center' } });
+const mainOptions = () => Object.assign(baseOptions(), { watermark: { visible: prefs.wmOn, text: wmText(), fontSize: 52, color: C.wm, horzAlign: 'center', vertAlign: 'center' } });
 applyTheme();
 const chart = LC.createChart($('#mainChart'), mainOptions());
 const charts = [];
@@ -1592,20 +1679,27 @@ function gripDrag(grip, P) {
 }
 const paneLabel = key => { const list = prefs.inds.filter(i => i.pane === key); return list.length ? list.map(i => TYPES[i.type].short(i.p)).join(' + ') : '빈 창'; };
 
+const LINE_TYPES = ['line', 'step', 'markers', 'area', 'baseline']; // 종가 하나로 그리는 차트 유형
+const scaleModeOf = () => CMP.list.length ? LC.PriceScaleMode.Percentage : ({ log: LC.PriceScaleMode.Logarithmic, pct: LC.PriceScaleMode.Percentage, idx: LC.PriceScaleMode.IndexedTo100 })[prefs.scale] ?? LC.PriceScaleMode.Normal;
 function createMainSeries() {
-  const pf = priceFormat(), up = C.up, dn = C.down;
+  const up = C.up, dn = C.down, o = { priceFormat: priceFormat(), priceLineVisible: prefs.pline };
   switch (prefs.type) {
-    case 'hollow': mainSeries = chart.addCandlestickSeries({ upColor: 'rgba(0,0,0,0)', downColor: dn, borderUpColor: up, borderDownColor: dn, wickUpColor: up, wickDownColor: dn, priceFormat: pf }); break;
-    case 'bar': mainSeries = chart.addBarSeries({ upColor: up, downColor: dn, thinBars: false, priceFormat: pf }); break;
-    case 'line': mainSeries = chart.addLineSeries({ color: C.accent, lineWidth: 2, priceFormat: pf }); break;
-    case 'area': mainSeries = chart.addAreaSeries({ lineColor: C.accent, topColor: 'rgba(41,98,255,.28)', bottomColor: 'rgba(41,98,255,.02)', lineWidth: 2, priceFormat: pf }); break;
-    default: mainSeries = chart.addCandlestickSeries({ upColor: up, downColor: dn, borderUpColor: up, borderDownColor: dn, wickUpColor: up, wickDownColor: dn, priceFormat: pf });
+    case 'hollow': mainSeries = chart.addCandlestickSeries({ ...o, upColor: 'rgba(0,0,0,0)', downColor: dn, borderUpColor: up, borderDownColor: dn, wickUpColor: up, wickDownColor: dn }); break;
+    case 'bar': mainSeries = chart.addBarSeries({ ...o, upColor: up, downColor: dn, thinBars: false }); break;
+    case 'line': mainSeries = chart.addLineSeries({ ...o, color: C.accent, lineWidth: 2 }); break;
+    case 'step': mainSeries = chart.addLineSeries({ ...o, color: C.accent, lineWidth: 2, lineType: LC.LineType.WithSteps }); break;
+    case 'markers': mainSeries = chart.addLineSeries({ ...o, color: C.accent, lineWidth: 2, pointMarkersVisible: true, pointMarkersRadius: 2.5 }); break;
+    case 'area': mainSeries = chart.addAreaSeries({ ...o, lineColor: C.accent, topColor: hexA(C.accent, .28), bottomColor: hexA(C.accent, .02), lineWidth: 2 }); break;
+    case 'baseline': mainSeries = chart.addBaselineSeries({ ...o, baseValue: { type: 'price', price: S.bars.length ? S.bars[S.bars.length - 1].close : 0 }, lineWidth: 2,
+      topLineColor: up, topFillColor1: hexA(up, .28), topFillColor2: hexA(up, .04), bottomLineColor: dn, bottomFillColor1: hexA(dn, .04), bottomFillColor2: hexA(dn, .28) }); break;
+    default: mainSeries = chart.addCandlestickSeries({ ...o, upColor: up, downColor: dn, borderUpColor: up, borderDownColor: dn, wickUpColor: up, wickDownColor: dn });
   }
   const volOn = prefs.inds.some(i => i.type === 'vol' && i.pane === 'main' && !i.hidden);
-  mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: volOn ? 0.22 : 0.06 }, mode: prefs.log ? LC.PriceScaleMode.Logarithmic : LC.PriceScaleMode.Normal });
+  mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: volOn ? 0.22 : 0.06 }, mode: scaleModeOf(), invertScale: prefs.invert });
   S.selHline = -1;
   for (const h of S.hlines) h.line = mainSeries.createPriceLine(hlineOpts(h, false));
   mainSeries.attachPrimitive(drawLayer);
+  mainSeries.attachPrimitive(tvLayer);
 }
 // 메인 차트 순서: 거래량 → 캔들 → 나머지 지표(캔들 위). 그다음 창 순서대로 아래 창
 function rebuildIndicators() {
@@ -1698,7 +1792,7 @@ function mainPoint(i) {
   const b = S.bars[i];
   switch (prefs.type) {
     case 'heikin': return (S.ha[i] = haAt(i));
-    case 'line': case 'area': return { time: b.time, value: b.close };
+    case 'line': case 'step': case 'markers': case 'area': case 'baseline': return { time: b.time, value: b.close };
     default: return { time: b.time, open: b.open, high: b.high, low: b.low, close: b.close };
   }
 }
@@ -2355,6 +2449,7 @@ function onTrade(ev) {
   const prev = S.lastPrice;
   S.lastPrice = p; S.lastTrade = { T, p };
   if (prev != null && prev !== p) checkAlerts(prev, p);
+  if (RP.on) return; // 리플레이 중에는 차트를 멈춰 둔다 (끝내면 다시 받음)
   if (!S.bars.length || S.loading) { schedule(false); return; }
   const last = S.bars[S.bars.length - 1];
   if (T < last.t) return;
@@ -2374,7 +2469,7 @@ function placeBar(bar, E) {
   else { const i = S.tIndex.get(bar.time); if (i !== undefined) { S.bars[i] = bar; schedule(true); } }
 }
 function onKline(ev) {
-  if (S.loading || !S.raw.length || ev.iv !== spec.base) return;
+  if (RP.on || S.loading || !S.raw.length || ev.iv !== spec.base) return;
   const k = ev.bar, E = ev.E || Date.now() + LAT.off;
   const bar = { t: k.t, time: toTime(k.t), open: k.o, high: k.h, low: k.l, close: k.c, volume: k.v };
   if (spec.native) return placeBar(bar, E);
@@ -2445,7 +2540,7 @@ function setStatus(s) {
   el.querySelector('.conn-text').textContent = { connecting: '연결 중…', live: '실시간', reconnecting: '재연결 중…' }[s] || s;
 }
 async function resync() {
-  if (S.loading || !S.raw.length) return;
+  if (RP.on || S.loading || !S.raw.length) return;
   const token = S.token, sp = spec;
   try {
     const rr = await fetchRaw(sp, null, 1);
@@ -2489,6 +2584,7 @@ function renderMeta() {
   $$('#watchList .w-item').forEach(li => li.classList.toggle('active', li.dataset.s === cur.sid));
 }
 async function load(sid, ivId) {
+  rpExit(true);
   if (!sidInfo(sid)) sid = 'binance:spot:BTCUSDT';
   const symChanged = !cur || sid !== cur.sid || S.infoFor !== sid, venueChanged = !cur || cur.vk !== sidInfo(sid).vk;
   if (!cur || sid !== cur.sid) cur = makeCur(sid);
@@ -2545,7 +2641,7 @@ async function load(sid, ivId) {
   }
 }
 async function loadOlder() {
-  if (S.older || S.noMore || S.loading || !S.raw.length || S.bars.length >= 20000) return;
+  if (RP.on || S.older || S.noMore || S.loading || !S.raw.length || S.bars.length >= 20000) return;
   S.older = true;
   const token = S.token, sp = spec;
   try {
@@ -2630,8 +2726,8 @@ $('#watchList').addEventListener('click', e => {
 function renderTrades() {
   let h = '';
   for (const t of S.trades.slice(0, 40)) {
-    const d = new Date(t.T);
-    h += `<div class="t-row"><span class="${t.sell ? 'down' : 'up'}">${fp(t.p)}</span><span>${fmt(t.q, S.qtyPrec)}</span><span class="muted">${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}</span></div>`;
+    const d = zDate(t.T);
+    h += `<div class="t-row"><span class="${t.sell ? 'down' : 'up'}">${fp(t.p)}</span><span>${fmt(t.q, S.qtyPrec)}</span><span class="muted">${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}</span></div>`;
   }
   $('#tradeList').innerHTML = h || '<div class="empty">체결 내역을 기다리는 중…</div>';
 }
@@ -2683,19 +2779,31 @@ const DW_TOOLS = {
   rect: { name: '사각형', n: 2, icon: svgI('<rect x="3" y="4" width="12" height="10" rx="1"/>'), steps: ['한 모서리를 클릭하세요', '반대 모서리를 클릭하세요'] },
   ellipse: { name: '원', n: 2, icon: svgI('<ellipse cx="9" cy="9" rx="7" ry="5.5"/>'), steps: ['한 모서리를 클릭하세요', '반대 모서리를 클릭하세요'] },
   text: { name: '텍스트', n: 1, icon: svgI('<path d="M4 4h10M9 4v11"/>'), steps: ['글자를 넣을 자리를 클릭하세요'] },
+  crossline: { name: '교차선', n: 1, icon: svgI('<path d="M9 1v16M1 9h16"/>', dot(9, 9)), steps: ['교차점을 클릭하세요'] },
+  regression: { name: '회귀 추세 (±2σ)', n: 2, icon: svgI('<path d="M2 11L16 5"/><path d="M2 7.5l14-6M2 14.5l14-6" stroke-dasharray="2 2"/>'), steps: ['계산을 시작할 봉을 클릭하세요', '계산을 끝낼 봉을 클릭하세요'] },
+  fibtime: { name: '피보나치 시간대', n: 2, icon: svgI('<path d="M2 2v14M4.5 2v14M7 2v14M10.5 2v14M16 2v14"/>'), steps: ['기준 시점(0)을 클릭하세요', '한 칸(1)이 될 시점을 클릭하세요'] },
+  triangle: { name: '삼각형', n: 3, icon: svgI('<path d="M9 3l7 12H2z"/>'), steps: ['첫 꼭짓점을 클릭하세요', '둘째 꼭짓점을 클릭하세요', '셋째 꼭짓점을 클릭하세요'] },
+  elliott: { name: '엘리엇 충격파 (0-5)', n: 6, icon: svgI('<path d="M1.5 15l3-6 2.5 3 3.5-8 2 4.5 4-5"/>'), steps: ['0 지점을 클릭하세요', '1 지점을 클릭하세요', '2 지점을 클릭하세요', '3 지점을 클릭하세요', '4 지점을 클릭하세요', '5 지점을 클릭하세요'] },
+  pricelabel: { name: '가격 라벨', n: 1, icon: svgI('<path d="M2 9l4-4.5h10v9H6z"/>'), steps: ['가격을 표시할 자리를 클릭하세요'] },
+  arrowup: { name: '위 화살표 표시', n: 1, icon: svgI('<path d="M9 2.5l5 6h-3v7H7v-7H4z"/>'), steps: ['표시할 자리를 클릭하세요 (화살표 끝이 그 자리)'] },
+  arrowdown: { name: '아래 화살표 표시', n: 1, icon: svgI('<path d="M9 15.5l5-6h-3v-7H7v7H4z"/>'), steps: ['표시할 자리를 클릭하세요 (화살표 끝이 그 자리)'] },
   measure: { name: '측정 (가격·기간)', n: 2, icon: svgI('<path d="M2 13L13 2l3 3L5 16z"/><path d="M5.5 9.5l1.5 1.5M8 7l1.5 1.5M10.5 4.5L12 6"/>'), key: 'Alt+M', steps: ['시작점을 클릭하세요', '끝점을 클릭하세요'] },
   long: { name: '롱 포지션', n: 2, icon: svgI('<path d="M3 9h12"/>', '<rect x="3" y="3" width="12" height="6" style="fill:var(--up-soft)" stroke="none"/><rect x="3" y="9" width="12" height="5" style="fill:var(--down-soft)" stroke="none"/>'), steps: ['진입 가격을 클릭하세요', '목표 가격과 끝 시점을 클릭하세요'] },
   short: { name: '숏 포지션', n: 2, icon: svgI('<path d="M3 9h12"/>', '<rect x="3" y="3" width="12" height="6" style="fill:var(--down-soft)" stroke="none"/><rect x="3" y="9" width="12" height="5" style="fill:var(--up-soft)" stroke="none"/>'), steps: ['진입 가격을 클릭하세요', '목표 가격과 끝 시점을 클릭하세요'] },
 };
 const DW_GROUPS = [
-  { id: 'line', label: '선', tools: ['trend', 'ray', 'ext', 'arrow', 'hline', 'hray', 'vline'] },
-  { id: 'chan', label: '채널', tools: ['channel', 'pitchfork'] },
-  { id: 'fib', label: '피보나치', tools: ['fib', 'fibext'] },
-  { id: 'shape', label: '도형', tools: ['rect', 'ellipse'] },
-  { id: 'text', label: '텍스트', tools: ['text'] },
+  { id: 'line', label: '선', tools: ['trend', 'ray', 'ext', 'arrow', 'hline', 'hray', 'vline', 'crossline'] },
+  { id: 'chan', label: '채널', tools: ['channel', 'regression', 'pitchfork'] },
+  { id: 'fib', label: '피보나치', tools: ['fib', 'fibext', 'fibtime'] },
+  { id: 'shape', label: '도형', tools: ['rect', 'ellipse', 'triangle'] },
+  { id: 'wave', label: '파동', tools: ['elliott'] },
+  { id: 'text', label: '텍스트·표시', tools: ['text', 'pricelabel', 'arrowup', 'arrowdown'] },
   { id: 'measure', label: '측정·포지션', tools: ['measure', 'long', 'short'] },
 ];
-const DW_DEFAULT_COLOR = { rect: '#ab47bc', ellipse: '#ab47bc', text: 'fg' };
+const DW_DEFAULT_COLOR = { rect: '#ab47bc', ellipse: '#ab47bc', triangle: '#ab47bc', text: 'fg', arrowup: '#089981', arrowdown: '#f23645' };
+const FIBT = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+const ICON_LOCK = svgI('<rect x="4" y="8" width="10" height="7.5" rx="1.2"/><path d="M6 8V5.5a3 3 0 0 1 6 0V8"/>');
+const ICON_UNLOCK = svgI('<rect x="4" y="8" width="10" height="7.5" rx="1.2"/><path d="M6 8V5.5a3 3 0 0 1 5.8-1"/>');
 const SWATCHES = ['#2962ff', '#f23645', '#089981', '#f0b90b', '#ab47bc', '#00bcd4', 'fg'];
 const FIB = [[0, '#787b86'], [0.236, '#f23645'], [0.382, '#ff9800'], [0.5, '#4caf50'], [0.618, '#089981'], [0.786, '#00bcd4'], [1, '#787b86'], [1.618, '#2962ff'], [2.618, '#f23645']];
 const FIBX = [[0, '#787b86'], [0.382, '#f23645'], [0.618, '#ff9800'], [1, '#089981'], [1.272, '#00bcd4'], [1.618, '#2962ff'], [2, '#ab47bc'], [2.618, '#f23645']];
@@ -2740,6 +2848,25 @@ function anchorAt(x, y) {
   return { t: logicalToT(l), p: roundTick(p) };
 }
 function extendPt(a, b, len = EXT) { const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1; return { x: a.x + dx / L * len, y: a.y + dy / L * len }; }
+function regOf(pts) { // 두 시점 사이 종가의 선형 회귀와 표준편차 (위아래 선은 ±2σ)
+  const n = S.bars.length;
+  if (pts.length < 2 || !n) return null;
+  const la = tToLogical(pts[0].t), lb = tToLogical(pts[1].t);
+  if (la == null || lb == null) return null;
+  const i0 = Math.max(0, Math.round(Math.min(la, lb))), i1 = Math.min(n - 1, Math.round(Math.max(la, lb))), m = i1 - i0 + 1;
+  if (m < 3) return null;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0, ss = 0;
+  for (let i = i0; i <= i1; i++) { const x = i - i0, y = S.bars[i].close; sx += x; sy += y; sxy += x * y; sxx += x * x; }
+  const b = (m * sxy - sx * sy) / (m * sxx - sx * sx), a = (sy - b * sx) / m;
+  for (let i = i0; i <= i1; i++) { const r = S.bars[i].close - (a + b * (i - i0)); ss += r * r; }
+  return { i0, i1, y0: a, y1: a + b * (m - 1), dev: 2 * Math.sqrt(ss / m), rev: la > lb };
+}
+function regSegs(g) {
+  const ts = chart.timeScale(), x0 = ts.logicalToCoordinate(g.i0), x1 = ts.logicalToCoordinate(g.i1), Y = v => mainSeries.priceToCoordinate(v);
+  if (x0 == null || x1 == null) return [];
+  return [0, g.dev, -g.dev].map(o => [{ x: x0, y: Y(g.y0 + o) }, { x: x1, y: Y(g.y1 + o) }]).filter(([a, b]) => a.y != null && b.y != null);
+}
+const tTag = t => { const z = zDate(t); return `${pad(z.getUTCMonth() + 1)}.${pad(z.getUTCDate())} ${pad(z.getUTCHours())}:${pad(z.getUTCMinutes())}`; };
 function chanOffset(P) { const [a, b, c] = P; const yb = b.x === a.x ? a.y : a.y + (b.y - a.y) * (c.x - a.x) / (b.x - a.x); return c.y - yb; }
 function lineSegs(d, P) {
   switch (d.type) {
@@ -2761,6 +2888,11 @@ function lineSegs(d, P) {
       return [[P[0], far(P[0])], [P[1], far(P[1])], [P[2], far(P[2])], [P[1], P[2]]];
     }
     case 'fibext': return P.length > 1 ? [[P[0], P[1]]].concat(P.length > 2 ? [[P[1], P[2]]] : []) : [];
+    case 'crossline': return [[{ x: P[0].x, y: -EXT }, { x: P[0].x, y: EXT }], [{ x: -EXT, y: P[0].y }, { x: EXT, y: P[0].y }]];
+    case 'fibtime': return (P.length > 1 ? FIBT : [0]).map(k => { const x = P[0].x + (P.length > 1 ? (P[1].x - P[0].x) * k : 0); return [{ x, y: -EXT }, { x, y: EXT }]; });
+    case 'regression': { const g = regOf(ptsOf(d)); return g ? regSegs(g) : P.length > 1 ? [[P[0], P[1]]] : []; }
+    case 'triangle': return P.length > 1 ? [[P[0], P[1]]].concat(P.length > 2 ? [[P[1], P[2]], [P[2], P[0]]] : []) : [];
+    case 'elliott': return P.slice(1).map((q, k) => [P[k], q]);
   }
   return [];
 }
@@ -2775,6 +2907,9 @@ function areaOf(d, P, pts) {
     case 'rect': case 'ellipse': case 'measure': case 'fib': return P.length > 1 ? rectOf(P[0], P[1]) : null;
     case 'long': case 'short': { if (P.length < 2) return null; const g = posGeom(d, P, pts); if (g.yT == null || g.yS == null) return null; return { x1: g.x1, x2: g.x2, y1: Math.min(g.yT, g.yS), y2: Math.max(g.yT, g.yS) }; }
     case 'channel': { if (P.length < 3) return null; const dy = chanOffset(P); return { poly: [P[0], P[1], { x: P[1].x, y: P[1].y + dy }, { x: P[0].x, y: P[0].y + dy }] }; }
+    case 'triangle': return P.length > 2 ? { poly: P.slice(0, 3) } : null;
+    case 'arrowup': case 'arrowdown': { const s = 8 + 3 * d.w, up = d.type === 'arrowup'; return { x1: P[0].x - s, x2: P[0].x + s, y1: up ? P[0].y : P[0].y - 2.6 * s, y2: up ? P[0].y + 2.6 * s : P[0].y }; }
+    case 'pricelabel': return { x1: P[0].x - 3, x2: P[0].x + 20 + fp(pts[0].p).length * 7, y1: P[0].y - 26, y2: P[0].y + 3 };
   }
   return null;
 }
@@ -2830,11 +2965,50 @@ function drawOne(ctx, d, size, sel) {
   ctx.save();
   ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = d.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   switch (d.type) {
-    case 'trend': case 'ray': case 'ext': case 'hray': case 'vline': case 'pitchfork':
+    case 'trend': case 'ray': case 'ext': case 'hray': case 'vline': case 'pitchfork': case 'crossline': case 'elliott':
       for (const [a, b] of lineSegs(d, P)) strokeLine(ctx, a, b);
       if (d.type === 'hray') tag(ctx, fp(pts[0].p), Math.min(P[0].x + 6, size.width - 90), P[0].y - 12, col);
-      if (d.type === 'vline') { const dt = new Date(pts[0].t); tag(ctx, `${pad(dt.getMonth() + 1)}.${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`, P[0].x, size.height - 14, col, 'center'); }
+      if (d.type === 'vline' || d.type === 'crossline') tag(ctx, tTag(pts[0].t), P[0].x, size.height - 14, col, 'center');
+      if (d.type === 'crossline') tag(ctx, fp(pts[0].p), size.width - 4, P[0].y, col, 'right');
+      if (d.type === 'elliott') P.forEach((q, k) => { // 꼭대기는 위에, 바닥은 아래에 번호
+        const nb = [P[k - 1], P[k + 1]].filter(Boolean), peak = !nb.length || nb.every(o => q.y <= o.y);
+        tag(ctx, String(k), q.x, q.y + (peak ? -14 : 14), col, 'center');
+      });
       break;
+    case 'fibtime': {
+      lineSegs(d, P).forEach(([a, b], k) => { strokeLine(ctx, a, b); if (P.length > 1) txt(ctx, String(FIBT[k]), a.x + 4, 16, col); });
+      if (P.length > 1) { ctx.save(); ctx.setLineDash([4, 4]); ctx.lineWidth = 1; strokeLine(ctx, P[0], P[1]); ctx.restore(); }
+      break;
+    }
+    case 'regression': {
+      const g = regOf(pts);
+      if (!g) { if (P.length > 1) { ctx.setLineDash([4, 4]); strokeLine(ctx, P[0], P[1]); } break; }
+      const segs = regSegs(g);
+      if (segs.length === 3) {
+        const [, u, l] = segs;
+        ctx.fillStyle = hexA(col, .08); ctx.beginPath(); ctx.moveTo(u[0].x, u[0].y); ctx.lineTo(u[1].x, u[1].y); ctx.lineTo(l[1].x, l[1].y); ctx.lineTo(l[0].x, l[0].y); ctx.closePath(); ctx.fill();
+      }
+      segs.forEach(([a, b], k) => { ctx.save(); if (k) { ctx.setLineDash([6, 4]); ctx.lineWidth = 1; } strokeLine(ctx, a, b); ctx.restore(); });
+      if (!d.ghost && d.pts.length === 2) { d.pts[g.rev ? 1 : 0].p = roundTick(g.y0); d.pts[g.rev ? 0 : 1].p = roundTick(g.y1); } // 손잡이를 회귀선 끝에 맞춤
+      break;
+    }
+    case 'triangle': {
+      if (P.length > 2) { ctx.fillStyle = hexA(col, .12); ctx.beginPath(); ctx.moveTo(P[0].x, P[0].y); ctx.lineTo(P[1].x, P[1].y); ctx.lineTo(P[2].x, P[2].y); ctx.closePath(); ctx.fill(); }
+      for (const [a, b] of lineSegs(d, P)) strokeLine(ctx, a, b);
+      break;
+    }
+    case 'pricelabel': {
+      ctx.lineWidth = 1; strokeLine(ctx, P[0], { x: P[0].x + 8, y: P[0].y - 14 });
+      ctx.beginPath(); ctx.arc(P[0].x, P[0].y, 2.5, 0, Math.PI * 2); ctx.fill();
+      tag(ctx, fp(pts[0].p), P[0].x + 8, P[0].y - 14, col);
+      break;
+    }
+    case 'arrowup': case 'arrowdown': { // 화살표 끝이 클릭한 자리
+      const s = 8 + 3 * d.w, k = d.type === 'arrowup' ? 1 : -1, x = P[0].x, y = P[0].y;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + s, y + k * s); ctx.lineTo(x + s * .4, y + k * s); ctx.lineTo(x + s * .4, y + k * 2.6 * s);
+      ctx.lineTo(x - s * .4, y + k * 2.6 * s); ctx.lineTo(x - s * .4, y + k * s); ctx.lineTo(x - s, y + k * s); ctx.closePath(); ctx.fill();
+      break;
+    }
     case 'arrow': {
       if (P.length < 2) break;
       strokeLine(ctx, P[0], P[1]);
@@ -2975,7 +3149,9 @@ function renderDwBar() {
     + (fixed ? '' : SWATCHES.map(c => `<button type="button" class="sw" data-sw="${c}" style="background:${colorOf(c)}" aria-label="색 바꾸기 ${c === 'fg' ? '기본 글자색' : c}" aria-pressed="${d.color === c}"></button>`).join('') + '<span class="vs"></span>')
     + [1, 2, 3, 4].map(w => `<button type="button" class="wbtn" data-w="${w}" aria-pressed="${d.w === w}" title="${d.type === 'text' ? '글자 크기' : '선 두께'} ${w}">${d.type === 'text' ? fsz({ w }) + 'px' : w + 'px'}</button>`).join('')
     + (d.type === 'text' ? `<span class="vs"></span><button type="button" class="wbtn" data-dwact="edit">글자 수정</button>` : '')
-    + `<span class="vs"></span><button type="button" class="icon-btn" data-dwact="del" title="삭제 (Delete)" aria-label="삭제">${ICON_TRASH}</button>`;
+    + `<span class="vs"></span><button type="button" class="wbtn" data-dwact="clone" title="복제 — 오른쪽에 하나 더">복제</button>`
+    + `<button type="button" class="icon-btn" data-dwact="lock" aria-pressed="${!!d.lock}" title="${d.lock ? '잠금 풀기' : '잠금 — 끌어도 움직이지 않게'}" aria-label="${d.lock ? '잠금 풀기' : '잠금'}">${d.lock ? ICON_LOCK : ICON_UNLOCK}</button>`
+    + `<button type="button" class="icon-btn" data-dwact="del" title="삭제 (Delete)" aria-label="삭제">${ICON_TRASH}</button>`;
   bar.hidden = false;
 }
 $('#dwBar').addEventListener('click', e => {
@@ -2986,6 +3162,16 @@ $('#dwBar').addEventListener('click', e => {
   if (b.dataset.sw) { dwSnap(); d.color = b.dataset.sw; }
   else if (b.dataset.w) { dwSnap(); d.w = +b.dataset.w; }
   else if (b.dataset.dwact === 'del') return dwDelete(d.id);
+  else if (b.dataset.dwact === 'lock') { dwSnap(); if (d.lock) delete d.lock; else d.lock = true; }
+  else if (b.dataset.dwact === 'clone') {
+    dwSnap();
+    const c = JSON.parse(JSON.stringify(d));
+    c.id = newUid(); delete c.lock;
+    c.pts = c.pts.map(q => ({ t: logicalToT(Math.round(tToLogical(q.t)) + 8), p: q.p }));
+    DW.list.push(c); dwSave(); dwSelect(c.id);
+    toast(`${DW_TOOLS[d.type].name}을 복제했어요.`);
+    return;
+  }
   else if (b.dataset.dwact === 'edit') { const q = xyOf(d.pts[0]); return askText(d, q.x, q.y); }
   dwSave(); renderDwBar(); dwRedraw();
 });
@@ -3053,11 +3239,12 @@ $('#dwTextIn').addEventListener('blur', () => setTimeout(() => closeText(true), 
 
 // 도형을 바로 끌어서 옮기기: 차트가 화면 이동을 시작하기 전에 가로챈다
 $('#mainChart').addEventListener('pointerdown', e => {
-  if (S.tool !== 'cursor' || e.button !== 0 || !mainSeries) return;
+  if (S.tool !== 'cursor' || RP.picking || e.button !== 0 || !mainSeries) return;
   const r = $('#mainChart').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
   const hit = dwHit(x, y);
   if (!hit) return;
   dwSelect(hit.d.id); selectHline(-1);
+  if (hit.d.lock) return; // 잠근 도형은 옮기지 않는다 (끌면 차트가 움직임)
   chart.applyOptions({ handleScroll: false, handleScale: false });
   const orig = JSON.parse(JSON.stringify(hit.d.pts)), l0 = chart.timeScale().coordinateToLogical(x), p0 = mainSeries.coordinateToPrice(y);
   DW.drag = { hit, orig, l0, p0, moved: false, snap: JSON.stringify({ dw: DW.list, hl: S.hlines.map(h => h.price) }) };
@@ -3168,6 +3355,7 @@ function onChartTap(x, y) {
   if (DW.justDragged) { DW.justDragged = false; return; }
   const ts = chart.timeScale();
   if (ts.width() && (x > ts.width() || y > $('#mainChart').clientHeight - ts.height())) return; // 가격 축·시간 축 위는 무시
+  if (RP.picking) return rpBegin(x);
   if (S.tool === 'hline') {
     const raw = mainSeries.coordinateToPrice(y);
     if (raw == null || !isFinite(raw)) return;
@@ -3183,6 +3371,458 @@ function onChartTap(x, y) {
   S.hlines.forEach((h, i) => { const yy = mainSeries.priceToCoordinate(h.price); if (yy != null) { const d = Math.abs(yy - y); if (d < bd) { bd = d; best = i; } } });
   selectHline(best);
 }
+
+// ───────── 트레이딩뷰식 추가 기능 ─────────
+// 봉 마감 카운트다운 · 시간대와 시계 · 보이는 구간 최고/최저 · 1호가 선 · 날짜 구분선 · 거래량 프로파일
+// 차트 설정 창 · 가격 축 방식 · 날짜로 이동 · 전체 화면
+const nowSrv = () => Date.now() + (LAT.off || 0); // 거래소 서버 시계 기준 지금
+function fmtLeft(ms) { // 봉 마감까지 남은 시간
+  const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  if (d) return `${d}일 ${pad(h)}:${pad(m)}`;
+  return h ? `${pad(h)}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
+}
+const VP_ROWS = 24;
+function calcVP(i0, i1) { // 보이는 구간 가격대별 거래량. 봉 거래량을 고가~저가에 고르게 나눠 담는다
+  let lo = Infinity, hi = -Infinity;
+  for (let i = i0; i <= i1; i++) { const b = S.bars[i]; if (b.low < lo) lo = b.low; if (b.high > hi) hi = b.high; }
+  if (!(hi > lo)) return null;
+  const rows = VP_ROWS, step = (hi - lo) / rows, up = new Array(rows).fill(0), dn = new Array(rows).fill(0);
+  for (let i = i0; i <= i1; i++) {
+    const b = S.bars[i], arr = b.close >= b.open ? up : dn, v = b.volume;
+    if (!v) continue;
+    const r0 = Math.min(rows - 1, Math.floor((b.low - lo) / step)), r1 = Math.min(rows - 1, Math.floor((b.high - lo) / step));
+    if (r0 === r1) { arr[r0] += v; continue; }
+    const span = b.high - b.low;
+    for (let r = r0; r <= r1; r++) { const a = Math.max(b.low, lo + r * step), z = Math.min(b.high, lo + (r + 1) * step); if (z > a) arr[r] += v * (z - a) / span; }
+  }
+  const tot = up.map((u, r) => u + dn[r]), all = tot.reduce((a, x) => a + x, 0);
+  let poc = 0;
+  for (let r = 1; r < rows; r++) if (tot[r] > tot[poc]) poc = r;
+  let vaLo = poc, vaHi = poc, acc = tot[poc]; // 거래량 70%가 모인 가격대 (밸류 에어리어)
+  while (acc < all * 0.7 && (vaLo > 0 || vaHi < rows - 1)) {
+    const below = vaLo > 0 ? tot[vaLo - 1] : -1, above = vaHi < rows - 1 ? tot[vaHi + 1] : -1;
+    if (above >= below) acc += tot[++vaHi]; else acc += tot[--vaLo];
+  }
+  return { lo, step, rows, up, dn, max: Math.max(...tot), poc, vaLo, vaHi };
+}
+class TvLayer {
+  constructor() {
+    const o = this.cd = { y: 0, text: '', bg: '#000', vis: false };
+    this.axis = [{ coordinate: () => o.y, text: () => o.text, textColor: () => '#ffffff', backColor: () => o.bg, visible: () => o.vis, tickVisible: () => false }];
+    const r = { draw: t => this.drawBottom(t) };
+    this.panes = [{ zOrder: () => 'bottom', renderer: () => r }];
+    this.vpKey = ''; this.vp = null;
+  }
+  attached(p) { this.series = p.series; this.req = p.requestUpdate; }
+  detached() { this.series = this.req = null; }
+  priceAxisViews() { return this.axis; }
+  paneViews() { return this.panes; }
+  updateAllViews() { // 가격 축: 현재가 라벨 바로 아래에 봉 마감까지 남은 시간
+    const o = this.cd, n = S.bars.length;
+    o.vis = false;
+    if (!prefs.cd || RP.on || !this.series || !n || S.loading || (spec.ms && spec.ms < 5000)) return;
+    const b = S.bars[n - 1], ha = prefs.type === 'heikin' && S.ha[n - 1], v = ha ? ha.close : b.close, y = this.series.priceToCoordinate(v);
+    if (y == null) return;
+    o.y = y + 17;
+    o.text = fmtLeft(nextBucket(b.t, spec) - nowSrv());
+    o.bg = ['line', 'step', 'markers', 'area'].includes(prefs.type) ? C.accent : prefs.type === 'baseline' ? (v >= (TVL.base ?? v) ? C.up : C.down) : ((ha || b).close >= (ha || b).open ? C.up : C.down);
+    o.vis = true;
+  }
+  drawBottom(target) {
+    if (!this.series || !S.bars.length || S.loading) return;
+    target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
+      if (prefs.seps && spec.intraday) this.drawSeps(ctx, mediaSize);
+      if (prefs.vp) this.drawVP(ctx, mediaSize);
+    });
+  }
+  drawSeps(ctx, size) { // 하루가 바뀌는 곳 (고른 시간대 기준)
+    const ts = chart.timeScale(), vr = ts.getVisibleLogicalRange(), n = S.bars.length;
+    if (!vr || n < 2) return;
+    const i0 = Math.max(1, Math.floor(vr.from)), i1 = Math.min(n - 1, Math.ceil(vr.to));
+    ctx.save(); ctx.strokeStyle = C.muted; ctx.globalAlpha = .55; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath();
+    for (let i = i0; i <= i1; i++) {
+      if (Math.floor(S.bars[i].time / 86400) === Math.floor(S.bars[i - 1].time / 86400)) continue;
+      const x = ts.logicalToCoordinate(i), xp = ts.logicalToCoordinate(i - 1);
+      if (x == null) continue;
+      const xx = Math.round(xp == null ? x : (x + xp) / 2) + .5;
+      ctx.moveTo(xx, 0); ctx.lineTo(xx, size.height);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  drawVP(ctx, size) {
+    const ts = chart.timeScale(), vr = ts.getVisibleLogicalRange(), n = S.bars.length, s = this.series;
+    if (!vr) return;
+    const i0 = Math.max(0, Math.ceil(vr.from)), i1 = Math.min(n - 1, Math.floor(vr.to));
+    if (i1 - i0 < 1) return;
+    const last = S.bars[n - 1], key = `${i0}|${i1}|${n}|${last.close}|${last.volume}|${S.bars[i0].t}`;
+    if (key !== this.vpKey) { this.vpKey = key; this.vp = calcVP(i0, i1); }
+    const v = this.vp;
+    if (!v) return;
+    const W = Math.min(size.width * .3, 280), right = size.width - 1, max = v.max || 1;
+    for (let r = 0; r < v.rows; r++) {
+      const ya = s.priceToCoordinate(v.lo + (r + 1) * v.step), yb = s.priceToCoordinate(v.lo + r * v.step);
+      if (ya == null || yb == null) continue;
+      const top = Math.min(ya, yb) + .5, h = Math.max(1, Math.abs(yb - ya) - 1), a = r >= v.vaLo && r <= v.vaHi ? .42 : .18;
+      const wu = W * v.up[r] / max, wd = W * v.dn[r] / max;
+      ctx.fillStyle = hexA(C.up, a); ctx.fillRect(right - wu - wd, top, wu, h);
+      ctx.fillStyle = hexA(C.down, a); ctx.fillRect(right - wd, top, wd, h);
+    }
+    const yp = s.priceToCoordinate(v.lo + (v.poc + .5) * v.step);
+    if (yp != null) { ctx.save(); ctx.strokeStyle = '#ff9800'; ctx.globalAlpha = .85; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, Math.round(yp) + .5); ctx.lineTo(size.width, Math.round(yp) + .5); ctx.stroke(); ctx.restore(); }
+  }
+}
+const tvLayer = new TvLayer();
+
+// 보이는 구간 최고·최저, 1호가 선 (메인 시리즈를 새로 만들면 다시 단다)
+const TVL = { s: null, base: null, baseS: null };
+function tvLine(k, on, price, opts) {
+  if (TVL.s !== mainSeries) { for (const x of ['hi', 'lo', 'bid', 'ask']) TVL[x] = null; TVL.s = mainSeries; }
+  if (!mainSeries) return;
+  if (!on || !isN(price)) { if (TVL[k]) { try { mainSeries.removePriceLine(TVL[k]); } catch {} TVL[k] = null; } return; }
+  const sig = price + '|' + opts.color;
+  if (TVL[k] && TVL[k + 'Sig'] === sig) return;
+  TVL[k + 'Sig'] = sig;
+  const o = Object.assign({ price, lineWidth: 1, axisLabelVisible: true }, opts);
+  if (TVL[k]) TVL[k].applyOptions(o); else TVL[k] = mainSeries.createPriceLine(o);
+}
+function visHL() {
+  const vr = chart.timeScale().getVisibleLogicalRange(), n = S.bars.length;
+  if (!vr || !n) return null;
+  const i0 = Math.max(0, Math.ceil(vr.from)), i1 = Math.min(n - 1, Math.floor(vr.to));
+  if (i1 < i0) return null;
+  const line = LINE_TYPES.includes(prefs.type);
+  let hi = -Infinity, lo = Infinity;
+  for (let i = i0; i <= i1; i++) { const b = S.bars[i], h = line ? b.close : b.high, l = line ? b.close : b.low; if (h > hi) hi = h; if (l < lo) lo = l; }
+  return { hi, lo };
+}
+function updClock() {
+  const el = $('#tzClock');
+  const z = zDate(nowSrv()), s = `${pad(z.getUTCHours())}:${pad(z.getUTCMinutes())}:${pad(z.getUTCSeconds())}`;
+  if (el.textContent !== s) el.textContent = s;
+  renderBarClose();
+}
+function tvTick() {
+  updClock();
+  if (document.hidden || !mainSeries || S.loading || !S.bars.length) return;
+  if (tvLayer.req && (prefs.cd || prefs.vp)) tvLayer.req();
+  const hl = prefs.hilo || prefs.type === 'baseline' ? visHL() : null;
+  tvLine('hi', prefs.hilo && hl, hl && hl.hi, { color: C.muted, lineStyle: LC.LineStyle.Dotted, title: '최고' });
+  tvLine('lo', prefs.hilo && hl, hl && hl.lo, { color: C.muted, lineStyle: LC.LineStyle.Dotted, title: '최저' });
+  const bk = S.book, bid = bk && bk.bids && bk.bids[0] && bk.bids[0][0], ask = bk && bk.asks && bk.asks[0] && bk.asks[0][0];
+  // 1호가는 현재가와 거의 붙어 있어 축 라벨 대신 선 이름에 가격을 넣는다 (마감 시간 라벨과 겹치지 않게)
+  tvLine('bid', prefs.bidask, bid, { color: C.up, lineStyle: LC.LineStyle.Dashed, axisLabelVisible: false, title: isN(bid) ? '매수 ' + fp(bid) : '' });
+  tvLine('ask', prefs.bidask, ask, { color: C.down, lineStyle: LC.LineStyle.Dashed, axisLabelVisible: false, title: isN(ask) ? '매도 ' + fp(ask) : '' });
+  if (prefs.type === 'baseline' && hl) { // 베이스라인 기준: 보이는 구간 가운데 (트레이딩뷰 기본 50%)
+    const base = roundTick((hl.hi + hl.lo) / 2);
+    if (base !== TVL.base || TVL.baseS !== mainSeries) { TVL.base = base; TVL.baseS = mainSeries; mainSeries.applyOptions({ baseValue: { type: 'price', price: base } }); }
+  }
+}
+setInterval(tvTick, 500);
+
+// ── 차트 모양 다시 그리기 (색·격자·워터마크 등을 바꿨을 때) ──
+function refreshLook() {
+  applyTheme();
+  keepRange(() => { chart.applyOptions(mainOptions()); rebuildIndicators(); if (S.bars.length && !S.loading) renderAll(); });
+  syncControls(); renderDwBar(); tvTick();
+}
+
+// ── 가격 축 방식 ──
+function applyScale() { if (mainSeries) mainSeries.priceScale().applyOptions({ mode: scaleModeOf(), invertScale: prefs.invert, autoScale: true }); }
+const SCALE_NAMES = { n: '일반', log: '로그', pct: '퍼센트(%)', idx: '100 기준' };
+function setScale(v) {
+  prefs.scale = v; savePrefs(); applyScale(); syncToolButtons();
+  toast(`가격 축: ${SCALE_NAMES[v]}`);
+}
+function toggleInvert() { prefs.invert = !prefs.invert; savePrefs(); applyScale(); toast(prefs.invert ? '가격 축을 뒤집었어요 (Alt+I로 되돌리기).' : '가격 축을 원래대로 돌렸어요.'); }
+
+// ── 시간대 ──
+const TZ_LIST = [['local', '내 기기 시간대'], ['utc', '거래소 일봉 기준 · 런던(겨울)'], ['+9', '서울 · 도쿄'], ['+8', '홍콩 · 싱가포르 · 상하이'], ['+7', '방콕 · 호찌민 · 자카르타'],
+  ['+5.5', '뭄바이'], ['+4', '두바이'], ['+3', '이스탄불 · 모스크바'], ['+2', '카이로 · 아테네(겨울)'], ['+1', '파리 · 베를린(겨울) · 런던(서머타임)'], ['-3', '상파울루'],
+  ['-4', '뉴욕(서머타임)'], ['-5', '뉴욕(겨울) · 시카고(서머타임)'], ['-6', '시카고(겨울)'], ['-7', 'LA(서머타임)'], ['-8', 'LA(겨울)'], ['-10', '하와이']];
+const tzName = v => v === 'local' ? `내 기기 (${tzLabelOf(tzOffsetOf('local'))})` : tzLabelOf(tzOffsetOf(v));
+const BC_IVS = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1M'];
+function renderBarClose() { // 시간 단위별 봉 마감까지 남은 시간 (거래소 기준: UTC 0시에 일봉, 월요일 0시에 주봉이 바뀜)
+  const el = $('#bcList');
+  if (!el || $('#tzPop').hidden) return;
+  const now = nowSrv();
+  el.innerHTML = BC_IVS.map(id => {
+    const sp = parseIv(id);
+    if (!sp) return '';
+    return `<div class="bc-row${sp.id === spec.id ? ' on' : ''}"><span>${sp.label}</span><b class="num">${fmtLeft(nextBucket(bucketStart(now, sp), sp) - now)}</b></div>`;
+  }).join('');
+}
+function buildTzMenu() {
+  $('#tzPop').innerHTML = '<div class="pop-title">봉 마감까지 남은 시간</div><div class="bc-list" id="bcList"></div><div class="pop-title">시간대</div>' + TZ_LIST.map(([v, name]) => `<button type="button" class="pop-item type-item tz-item" role="menuitemradio" data-tz="${v}" aria-checked="${v === prefs.tz}"><b>${v === 'local' ? '내 기기' : tzLabelOf(tzOffsetOf(v))}</b><span class="muted">${v === 'local' ? tzLabelOf(tzOffsetOf('local')) : name}</span><span class="check">✓</span></button>`).join('')
+    + '<p class="pop-hint">차트 시간축·십자선·체결 시간이 이 시간대로 표시돼요. 서머타임은 자동으로 바뀌지 않아요.</p>';
+  setTimeout(renderBarClose, 0);
+}
+function setTz(v) {
+  if (!TZ_LIST.some(x => x[0] === v)) return;
+  prefs.tz = v; savePrefs();
+  TZ = tzOffsetOf(v);
+  $('#tzLbl').textContent = tzLabelOf(TZ); updClock();
+  if (RP.on) { rpExit(); return; } // 리플레이 중이면 실시간으로 돌아오며 새 시간대로 다시 받는다
+  for (const b of S.raw) b.time = toTime(b.t);
+  if (S.bars.length && !S.loading) { S.futBase = null; buildBars(); keepRange(renderAll); }
+  tradesDirty = true; dwRedraw();
+  if (!$('#chartDlg').hidden) renderChartSet();
+  toast(`시간대를 ${tzName(v)}로 바꿨어요.`);
+}
+$('#tzPop').addEventListener('click', e => { const b = e.target.closest('[data-tz]'); if (!b) return; closePops(); setTz(b.dataset.tz); });
+$('#tzLbl').textContent = tzLabelOf(TZ);
+updClock();
+
+// ── 차트 설정 창 ──
+const CS_SHOW = [['cd', '봉 마감까지 남은 시간', '가격 축의 현재가 아래에 표시'], ['pline', '현재가 선'], ['hilo', '보이는 구간 최고가 · 최저가'], ['bidask', '매수 · 매도 1호가 선'],
+  ['seps', '날짜 구분선', '분·시간 봉에서 하루가 바뀌는 곳 (고른 시간대 기준)'], ['vp', '거래량 프로파일', '보이는 구간의 가격대별 거래량 · 진한 부분은 거래량 70% 구간, 주황 선은 가장 많이 거래된 가격(POC)'],
+  ['grid', '격자선'], ['wmOn', '종목 이름 워터마크']];
+const COLOR_PRESETS = { global: [null, null], kr: ['#f23645', '#2962ff'] };
+function renderChartSet() {
+  const kr = prefs.upC === COLOR_PRESETS.kr[0] && prefs.dnC === COLOR_PRESETS.kr[1];
+  $('#chartBody').innerHTML = `<section class="cs-sec"><h3>캔들 색</h3>
+      <div class="seg" role="group" aria-label="색 묶음"><button type="button" data-cpre="global" aria-pressed="${!prefs.upC && !prefs.dnC}">초록 상승 · 빨강 하락</button><button type="button" data-cpre="kr" aria-pressed="${kr}">빨강 상승 · 파랑 하락 (국내식)</button></div>
+      <div class="cs-colors"><label class="fld color"><input type="color" id="csUp" value="${C.up}"><span>상승</span></label><label class="fld color"><input type="color" id="csDn" value="${C.down}"><span>하락</span></label></div>
+    </section>
+    <section class="cs-sec"><h3>차트에 표시</h3>
+      ${CS_SHOW.map(([k, l, hint]) => `<label class="cs-chk"><input type="checkbox" data-cs="${k}"${prefs[k] ? ' checked' : ''}><span>${l}${hint ? `<small>${hint}</small>` : ''}</span></label>`).join('')}
+    </section>
+    <section class="cs-sec"><h3>가격 축</h3>
+      <div class="seg" role="group" aria-label="가격 축 방식">${Object.entries(SCALE_NAMES).map(([v, l]) => `<button type="button" data-scale="${v}" aria-pressed="${prefs.scale === v}">${l}</button>`).join('')}</div>
+      <label class="cs-chk"><input type="checkbox" data-cs="invert"${prefs.invert ? ' checked' : ''}><span>위아래 뒤집기 <small>단축키 Alt+I · 로그 Alt+L · 퍼센트 Alt+P</small></span></label>
+    </section>
+    <section class="cs-sec"><h3>십자선</h3>
+      <div class="seg" role="group" aria-label="십자선 움직임">${[['normal', '자유롭게'], ['magnet', '봉 종가에 붙기']].map(([v, l]) => `<button type="button" data-cross="${v}" aria-pressed="${prefs.cross === v}">${l}</button>`).join('')}</div>
+    </section>
+    <section class="cs-sec"><h3>시간대</h3>
+      <select class="field" id="csTz" aria-label="시간대">${TZ_LIST.map(([v, name]) => `<option value="${v}"${v === prefs.tz ? ' selected' : ''}>${esc(tzName(v))}${v === 'local' ? '' : ' · ' + esc(name)}</option>`).join('')}</select>
+    </section>`;
+}
+function openChartSet() { closePops(); renderChartSet(); $('#chartDlg').hidden = false; }
+$('#chartSetBtn').addEventListener('click', openChartSet);
+$('#chartBody').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.cpre) { [prefs.upC, prefs.dnC] = COLOR_PRESETS[b.dataset.cpre]; savePrefs(); refreshLook(); }
+  else if (b.dataset.scale) { prefs.scale = b.dataset.scale; savePrefs(); applyScale(); syncToolButtons(); }
+  else if (b.dataset.cross) { prefs.cross = b.dataset.cross; savePrefs(); for (const c of charts) c.applyOptions({ crosshair: { mode: prefs.cross === 'magnet' ? LC.CrosshairMode.Magnet : LC.CrosshairMode.Normal } }); }
+  else return;
+  renderChartSet();
+});
+$('#chartBody').addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'csUp' || t.id === 'csDn') { prefs[t.id === 'csUp' ? 'upC' : 'dnC'] = t.value; savePrefs(); refreshLook(); renderChartSet(); return; }
+  if (t.id === 'csTz') return setTz(t.value);
+  const k = t.dataset.cs;
+  if (!k) return;
+  prefs[k] = t.checked; savePrefs();
+  if (k === 'grid' || k === 'wmOn') refreshLook();
+  else if (k === 'pline') { if (mainSeries) mainSeries.applyOptions({ priceLineVisible: prefs.pline }); }
+  else if (k === 'invert') applyScale();
+  else { tvTick(); if (tvLayer.req) tvLayer.req(); }
+});
+
+// ── 날짜로 이동 ──
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function prepGoto() {
+  const vr = chart.timeScale().getVisibleLogicalRange(), n = S.bars.length;
+  const i = vr && n ? Math.max(0, Math.min(n - 1, Math.round((vr.from + vr.to) / 2))) : n - 1;
+  const z = zDate(n ? S.bars[i].t : nowSrv());
+  $('#gotoIn').value = `${z.getUTCFullYear()}-${pad(z.getUTCMonth() + 1)}-${pad(z.getUTCDate())}T${pad(z.getUTCHours())}:${pad(z.getUTCMinutes())}`;
+  $('#gotoTz').textContent = tzLabelOf(TZ);
+}
+function openGoto() { closePops(); prepGoto(); openPop($('#gotoBtn'), $('#gotoPop')); setTimeout(() => $('#gotoIn').focus(), 0); }
+async function gotoDate(v) {
+  const m = /^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(v || '');
+  if (!m) { toast('날짜를 고르세요.', 'err'); return; }
+  const target = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)) - TZ * 1000;
+  if (target > nowSrv()) { toast('아직 오지 않은 시간이에요.', 'err'); return; }
+  closePops();
+  const token = S.token;
+  if (S.bars.length && S.bars[0].t > target && !S.noMore) toast('예전 봉을 받아 오는 중…');
+  for (let k = 0; k < 80 && token === S.token && S.bars.length && S.bars[0].t > target && !S.noMore && S.bars.length < 20000; k++) {
+    while (S.older && token === S.token) await sleep(80);
+    const before = S.raw.length;
+    await loadOlder();
+    if (S.raw.length === before && !S.older) break;
+  }
+  if (token !== S.token || !S.bars.length) return;
+  const b = S.bars;
+  if (b[0].t > target) toast(S.noMore ? '그보다 예전 봉은 거래소에 없어요. 가장 오래된 봉으로 이동했어요.' : '봉이 너무 많아 더 받지 못했어요. 큰 시간 단위로 바꿔서 이동해 보세요.', 'err');
+  let lo = 0, hi = b.length - 1;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (b[mid].t <= target) lo = mid; else hi = mid - 1; }
+  const r = chart.timeScale().getVisibleLogicalRange(), w = r ? Math.max(40, r.to - r.from) : 120;
+  chart.timeScale().setVisibleLogicalRange({ from: lo - w / 2, to: lo + w / 2 });
+  for (const c of charts) c.priceScale('right').applyOptions({ autoScale: true });
+}
+$('#gotoForm').addEventListener('submit', e => { e.preventDefault(); gotoDate($('#gotoIn').value); });
+
+// ── 전체 화면 ──
+const FS_ON = '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.5v-4h4M11.5 2.5h4v4M15.5 11.5v4h-4M6.5 15.5h-4v-4"/></svg>';
+const FS_OFF = '<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 2.5v4h-4M15.5 6.5h-4v-4M11.5 15.5v-4h4M2.5 11.5h4v4"/></svg>';
+function syncFs() {
+  const on = !!document.fullscreenElement, b = $('#fsBtn');
+  b.innerHTML = on ? FS_OFF : FS_ON;
+  b.setAttribute('aria-label', on ? '전체 화면 끝내기' : '전체 화면');
+  b.title = on ? '전체 화면 끝내기 (Esc)' : '전체 화면';
+}
+$('#fsBtn').hidden = !document.fullscreenEnabled;
+$('#fsBtn').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => toast('전체 화면으로 바꾸지 못했어요.', 'err')); });
+document.addEventListener('fullscreenchange', syncFs);
+syncFs();
+
+// ───────── 바 리플레이 ─────────
+// 과거의 한 봉에서 시작해 한 봉씩(또는 자동으로) 차트를 다시 펼쳐 본다. 끝내면 실시간 차트로 돌아온다
+const RP = { on: false, picking: false, full: null, idx: 0, timer: null, speed: 1 };
+const RP_SPEEDS = [[1, '1배'], [3, '3배'], [10, '10배']];
+function rpPick() {
+  if (RP.on) return rpExit();
+  if (!S.bars.length || S.loading) return;
+  setTool('cursor');
+  RP.picking = true;
+  const h = $('#drawHint');
+  h.textContent = '바 리플레이: 시작할 봉을 클릭하세요 · Esc 취소';
+  h.hidden = false;
+  syncRpBtn();
+}
+function rpCancelPick() { RP.picking = false; $('#drawHint').hidden = true; syncRpBtn(); }
+function rpBegin(x) {
+  const n = S.bars.length, l = chart.timeScale().coordinateToLogical(x);
+  rpCancelPick();
+  if (l == null || n < 30) return;
+  const i = Math.max(10, Math.min(n - 2, Math.round(l)));
+  const r = chart.timeScale().getVisibleLogicalRange(), w = r ? r.to - r.from : 120;
+  RP.full = S.bars.slice(); RP.idx = i; RP.on = true;
+  S.bars = RP.full.slice(0, i + 1); rebuildIndex(); S.futBase = null;
+  renderAll();
+  chart.timeScale().setVisibleLogicalRange({ from: i - w * .8, to: i + w * .2 });
+  renderRpBar(); syncRpBtn();
+  toast('바 리플레이를 시작했어요. ▶로 재생하거나 한 봉씩 넘겨 보세요. (Shift+→ 한 봉)');
+}
+function rpStep() {
+  if (!RP.on) return;
+  if (RP.idx >= RP.full.length - 1) { rpPause(); toast('리플레이를 시작할 때의 마지막 봉까지 왔어요.'); return; }
+  RP.idx++;
+  pushBar(RP.full[RP.idx]);
+  schedule(false);
+  const r = chart.timeScale().getVisibleLogicalRange(); // 새 봉이 화면 밖으로 나가면 따라간다
+  if (r && RP.idx > r.to - 2) chart.timeScale().setVisibleLogicalRange({ from: r.from + 1, to: r.to + 1 });
+  renderRpBar();
+}
+function rpPlay() { if (!RP.on || RP.timer) return; RP.timer = setInterval(rpStep, 1000 / RP.speed); renderRpBar(); }
+function rpPause() { clearInterval(RP.timer); RP.timer = null; renderRpBar(); }
+function rpExit(silent) { // 실시간으로 돌아오기 (멈춘 동안 놓친 봉은 다시 받는다)
+  if (RP.picking) rpCancelPick();
+  if (!RP.on) return;
+  rpPause();
+  RP.on = false; RP.full = null;
+  $('#rpBar').hidden = true; syncRpBtn();
+  if (!silent) { load(cur.sid, spec.id); toast('실시간 차트로 돌아왔어요.'); }
+}
+function renderRpBar() {
+  const bar = $('#rpBar');
+  if (!RP.on) { bar.hidden = true; return; }
+  const b = S.bars[S.bars.length - 1], z = zDate(b.t);
+  bar.innerHTML = `<span class="rp-tag">리플레이</span>`
+    + `<button type="button" class="icon-btn" data-rp="${RP.timer ? 'pause' : 'play'}" aria-label="${RP.timer ? '일시정지' : '재생'}" title="${RP.timer ? '일시정지' : '재생'}">${RP.timer ? '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="4" y="3" width="3" height="10" rx=".6"/><rect x="9" y="3" width="3" height="10" rx=".6"/></svg>' : '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 3l8 5-8 5z"/></svg>'}</button>`
+    + `<button type="button" class="icon-btn" data-rp="step" aria-label="한 봉 넘기기" title="한 봉 넘기기 (Shift+→)"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3 3l7 5-7 5z"/><rect x="11" y="3" width="2" height="10" rx=".5"/></svg></button>`
+    + `<span class="seg">${RP_SPEEDS.map(([v, l]) => `<button type="button" data-rps="${v}" aria-pressed="${RP.speed === v}">${l}</button>`).join('')}</span>`
+    + `<span class="rp-time num">${z.getUTCFullYear()}.${pad(z.getUTCMonth() + 1)}.${pad(z.getUTCDate())}${spec.intraday ? ` ${pad(z.getUTCHours())}:${pad(z.getUTCMinutes())}` : ''}</span>`
+    + `<span class="rp-left muted">남은 봉 ${RP.full.length - 1 - RP.idx}</span>`
+    + `<button type="button" class="btn-ghost rp-exit" data-rp="exit">끝내기</button>`;
+  bar.hidden = false;
+}
+function syncRpBtn() { const b = $('#replayBtn'); if (b) b.setAttribute('aria-pressed', String(RP.on || RP.picking)); }
+$('#rpBar').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.rps) { RP.speed = +b.dataset.rps; if (RP.timer) { rpPause(); rpPlay(); } else renderRpBar(); return; }
+  ({ play: rpPlay, pause: rpPause, step: () => { rpPause(); rpStep(); }, exit: () => rpExit() })[b.dataset.rp]?.();
+});
+
+// ───────── 종목 비교 ─────────
+// 다른 종목(다른 거래소도 가능)의 종가를 같은 시간 단위로 받아 퍼센트 축에 겹쳐 그린다
+const CMP_COLORS = ['#ff9800', '#00bcd4', '#e91e63'];
+const CMP = { list: [], key: '', n: 0, timer: null };
+function cmpName(sid) { const s = sidInfo(sid); return s ? `${s.V.disp(s.native)} · ${EX_SHORT[s.V.ex]}${s.V.mk === 'perp' ? ' 선물' : ''}` : sid; }
+async function cmpFetch(c, full) {
+  const s = sidInfo(c.sid), sp = spec, key = CMP.key;
+  if (!s) return;
+  if (!s.V.iv.includes(sp.base)) { c.err = `${s.V.label}에서는 ${sp.label} 봉을 받을 수 없어요`; renderCmpLegend(); return; }
+  try {
+    let raw = [], end = null;
+    const need = full && S.bars.length ? S.bars[0].t : Infinity;
+    for (let pg = 0; pg < (full ? 6 : 1); pg++) {
+      const r = await s.V.klines(s.native, sp.base, end);
+      const part = r.bars.filter(b => !end || b.t <= end).map(b => ({ t: b.t, time: toTime(b.t), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
+      raw = part.concat(raw.filter(b => !part.length || b.t > part[part.length - 1].t));
+      if (!r.more || !part.length || part[0].t <= need) break;
+      end = part[0].t - 1;
+    }
+    if (key !== CMP.key || !CMP.list.includes(c)) return;
+    const bars = sp.native ? raw : aggregate(raw, sp);
+    if (full) c.map = new Map();
+    for (const b of bars) c.map.set(b.t, b.close);
+    c.err = null;
+    cmpSetData(c);
+  } catch (e) { c.err = '받지 못했어요'; }
+  renderCmpLegend();
+}
+function cmpSetData(c) {
+  if (!c.series || !c.map) return;
+  const d = [];
+  for (const b of S.bars) { const v = c.map.get(b.t); if (v != null) d.push({ time: b.time, value: v }); }
+  c.series.setData(d);
+}
+function cmpAddSeries(c) {
+  c.series = chart.addLineSeries({ color: c.color, lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 8, minMove: 1e-8 } });
+}
+function addCompare(sid) {
+  if (sid === cur.sid) { toast('지금 보는 종목이에요. 다른 종목을 고르세요.'); return; }
+  if (prefs.cmp.includes(sid)) { toast('이미 비교하고 있어요.'); return; }
+  if (prefs.cmp.length >= 3) { toast('비교는 3개까지예요. 범례에서 하나를 지운 뒤 추가하세요.', 'err'); return; }
+  prefs.cmp.push(sid); savePrefs();
+  const c = { sid, color: CMP_COLORS.find(x => !CMP.list.some(o => o.color === x)) || '#9e9e9e', map: null, series: null, err: null };
+  CMP.list.push(c);
+  cmpAddSeries(c); applyScale(); syncToolButtons();
+  renderCmpLegend();
+  cmpFetch(c, true);
+  toast(`${cmpName(sid)}와 비교해요. 가격 축은 퍼센트(%)로 바뀌어요.`);
+}
+function removeCompare(sid) {
+  const c = CMP.list.find(x => x.sid === sid);
+  if (!c) return;
+  try { chart.removeSeries(c.series); } catch {}
+  CMP.list = CMP.list.filter(x => x !== c);
+  prefs.cmp = prefs.cmp.filter(x => x !== sid); savePrefs();
+  applyScale(); syncToolButtons(); renderCmpLegend();
+}
+function renderCmpLegend() {
+  const el = $('#lgCmp');
+  el.innerHTML = CMP.list.map(c => `<span class="cmp-chip"><i style="background:${c.color}"></i>${esc(cmpName(c.sid))}${c.err ? ` <em>${esc(c.err)}</em>` : ''}<button type="button" data-cmpdel="${esc(c.sid)}" aria-label="${esc(cmpName(c.sid))} 비교 지우기" title="비교 지우기">${ICON_X}</button></span>`).join('');
+  el.hidden = !CMP.list.length;
+}
+$('#lgCmp').addEventListener('click', e => { const b = e.target.closest('[data-cmpdel]'); if (b) removeCompare(b.dataset.cmpdel); });
+function cmpTick() { // 종목·시간 단위·시간대가 바뀌면 다시 받고, 켜 둔 동안은 10초마다 최근 봉을 맞춘다
+  if (!CMP.list.length || S.loading || !S.bars.length || !cur) return;
+  const key = `${cur.sid}|${spec.id}|${TZ}`;
+  if (key !== CMP.key) {
+    CMP.key = key; CMP.n = S.bars.length;
+    for (const c of CMP.list) { if (c.sid === cur.sid) continue; c.map = null; c.series.setData([]); cmpFetch(c, true); }
+    return;
+  }
+  if (S.bars.length !== CMP.n || S.bars[0].t !== CMP.first) { CMP.n = S.bars.length; CMP.first = S.bars[0].t; for (const c of CMP.list) cmpSetData(c); }
+}
+setInterval(cmpTick, 1000);
+setInterval(() => { if (!document.hidden && !RP.on) for (const c of CMP.list) if (c.map) cmpFetch(c, false); }, 10000);
+function initCompare() { // 시작할 때 저장된 비교 종목 다시 달기
+  for (const sid of prefs.cmp) {
+    const c = { sid, color: CMP_COLORS[CMP.list.length] || '#9e9e9e', map: null, series: null, err: null };
+    CMP.list.push(c); cmpAddSeries(c);
+  }
+  renderCmpLegend();
+}
+$('#cmpBtn').addEventListener('click', () => openSearch('cmp'));
+initCompare();
 
 // ───────── 팝오버 ─────────
 function closePops() {
@@ -3206,6 +3846,8 @@ document.addEventListener('click', e => {
   if (!willOpen) return;
   if (pop.id === 'ivPop') buildIvMenu();
   if (pop.id === 'latPop') { pop.hidden = false; renderLatency(); }
+  if (pop.id === 'tzPop') buildTzMenu();
+  if (pop.id === 'gotoPop') { prepGoto(); setTimeout(() => $('#gotoIn').focus(), 0); }
   openPop(btn, pop);
 });
 document.addEventListener('pointerdown', e => { if (!e.target.closest('.pop, [data-pop], [data-flyout]')) closePops(); });
@@ -3233,9 +3875,12 @@ function buildTools() {
   for (const t of TOGGLES) h += `<button type="button" class="tool" data-toggle="${t.k}" aria-pressed="${!!prefs[t.k]}" aria-label="${t.name}" title="${t.name}">${t.icon}</button>`;
   h += `<button type="button" class="tool" id="clearDw" aria-label="작도 모두 지우기" title="이 종목의 작도 모두 지우기 (Ctrl+Z로 되돌리기)">${ICON_TRASH}</button>`;
   h += '<span class="hsep"></span>';
-  h += '<button type="button" class="tool txt" id="logBtn" aria-pressed="false" title="로그 스케일">log</button>';
+  h += '<button type="button" class="tool txt" id="logBtn" aria-pressed="false" title="로그 스케일 (Alt+L)">log</button>';
+  h += '<button type="button" class="tool txt" id="pctBtn" aria-pressed="false" title="퍼센트 스케일 (Alt+P)">%</button>';
   h += `<button type="button" class="tool" id="resetBtn" aria-label="화면 초기화" title="화면 초기화 — 최근 봉으로 돌아가고 가격 축 자동 맞춤">${svgI('<path d="M3.5 9a5.5 5.5 0 1 0 1.7-4"/><path d="M3 2.5v3h3"/>')}</button>`;
   h += `<button type="button" class="tool" id="shotBtn" aria-label="차트 이미지 저장" title="차트 이미지 저장 (PNG)">${svgI('<path d="M2.5 6.5A1.5 1.5 0 0 1 4 5h1.6l1.2-1.8h4.4L12.4 5H14a1.5 1.5 0 0 1 1.5 1.5v6.5A1.5 1.5 0 0 1 14 14.5H4A1.5 1.5 0 0 1 2.5 13z"/><circle cx="9" cy="9.5" r="2.6"/>')}</button>`;
+  h += `<button type="button" class="tool" id="replayBtn" aria-pressed="false" aria-label="바 리플레이" title="바 리플레이 — 과거의 한 봉부터 다시 펼쳐 보기">${svgI('<path d="M3 3v12"/><path d="M15 3.5v11L6 9z"/>')}</button>`;
+  h += `<button type="button" class="tool" id="gotoBtn" data-pop="gotoPop" aria-haspopup="true" aria-expanded="false" aria-label="날짜로 이동" title="날짜로 이동 (Alt+G)">${svgI('<rect x="2.5" y="3.5" width="13" height="12" rx="1.5"/><path d="M2.5 7.5h13M6 2v3M12 2v3M9 10v3M7.5 11.5L9 13l1.5-1.5"/>')}</button>`;
   $('#tools').innerHTML = h;
 }
 function syncToolButtons() {
@@ -3248,7 +3893,8 @@ function syncToolButtons() {
     b.setAttribute('aria-pressed', String(S.tool === t));
   }
   for (const t of TOGGLES) $(`#tools [data-toggle="${t.k}"]`).setAttribute('aria-pressed', String(!!prefs[t.k]));
-  $('#logBtn').setAttribute('aria-pressed', String(prefs.log));
+  $('#logBtn').setAttribute('aria-pressed', String(prefs.scale === 'log'));
+  $('#pctBtn').setAttribute('aria-pressed', String(prefs.scale === 'pct'));
 }
 function pickTool(t) {
   const g = groupOf(t);
@@ -3281,7 +3927,8 @@ $('#tools').addEventListener('click', e => {
     toast(`작도 ${n}개를 지웠어요. Ctrl+Z로 되돌릴 수 있어요.`);
     return;
   }
-  if (b.id === 'logBtn') { prefs.log = !prefs.log; savePrefs(); syncToolButtons(); if (mainSeries) mainSeries.priceScale().applyOptions({ mode: prefs.log ? LC.PriceScaleMode.Logarithmic : LC.PriceScaleMode.Normal }); return; }
+  if (b.id === 'logBtn') return setScale(prefs.scale === 'log' ? 'n' : 'log');
+  if (b.id === 'pctBtn') return setScale(prefs.scale === 'pct' ? 'n' : 'pct');
   if (b.id === 'resetBtn') {
     for (const c of charts) c.priceScale('right').applyOptions({ autoScale: true });
     chart.timeScale().applyOptions({ barSpacing: 7 });
@@ -3290,6 +3937,7 @@ $('#tools').addEventListener('click', e => {
     return;
   }
   if (b.id === 'shotBtn') screenshot();
+  if (b.id === 'replayBtn') rpPick();
 });
 $('#toolPop').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (!b) return; closePops(); pickTool(b.dataset.pick); });
 function screenshot() {
@@ -3302,9 +3950,10 @@ function screenshot() {
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, w, h);
   let y = 0;
   for (const s of shots) { ctx.drawImage(s, 0, y); y += s.height; }
-  const now = new Date(), stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const now = zDate(nowSrv()), ymd = `${now.getUTCFullYear()}.${pad(now.getUTCMonth() + 1)}.${pad(now.getUTCDate())}`, hm = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}`;
+  const stamp = ymd.replace(/\./g, '') + '_' + hm.replace(':', '');
   ctx.fillStyle = C.fg; ctx.font = `600 ${Math.round(14 * ratio)}px "IBM Plex Sans KR", sans-serif`;
-  ctx.fillText(`${S.base}/${S.quote} · ${spec.label} · Binance · ${now.toLocaleString('ko-KR')}`, 12 * ratio, 22 * ratio);
+  ctx.fillText(`${S.base}/${S.quote} · ${spec.label} · ${cur.V.label} · ${ymd} ${hm} (${tzLabelOf(TZ)})`, 12 * ratio, 22 * ratio);
   cv.toBlob(b => {
     if (!b) { toast('이미지를 만들지 못했어요.', 'err'); return; }
     const a = document.createElement('a');
@@ -3392,7 +4041,7 @@ $('#ivQuickIn').addEventListener('keydown', e => {
 $('#ivQuickIn').addEventListener('blur', () => setTimeout(() => { $('#ivQuick').hidden = true; }, 150));
 
 // ───────── 차트 유형 ─────────
-const CHART_TYPES = [['candle', '캔들'], ['hollow', '속 빈 캔들'], ['heikin', '하이킨 아시'], ['bar', '바'], ['line', '라인'], ['area', '영역']];
+const CHART_TYPES = [['candle', '캔들'], ['hollow', '속 빈 캔들'], ['heikin', '하이킨 아시'], ['bar', '바'], ['line', '라인'], ['step', '계단식 라인'], ['markers', '점 찍힌 라인'], ['area', '영역'], ['baseline', '베이스라인']];
 function buildTypeMenu() {
   $('#typePop').innerHTML = '<div class="pop-title">차트 유형</div>' + CHART_TYPES.map(([id, l]) => `<button type="button" class="pop-item type-item" role="menuitemradio" data-type="${id}" aria-checked="${id === prefs.type}">${l}<span class="check">✓</span></button>`).join('');
 }
@@ -3719,7 +4368,7 @@ function openSearch(mode, initial) {
   closePops();
   lastFocus = document.activeElement; searchMode = mode;
   searchVk = cur ? cur.vk : 'binance:spot';
-  $('#searchTitle').textContent = mode === 'add' ? '관심 종목 추가' : '종목 검색';
+  $('#searchTitle').textContent = mode === 'add' ? '관심 종목 추가' : mode === 'cmp' ? '비교할 종목 고르기' : '종목 검색';
   $('#search').hidden = false;
   const inp = $('#searchInput');
   inp.value = initial || ''; inp.focus();
@@ -3735,6 +4384,7 @@ function choose(sid) {
   closeSearch();
   const s = sidInfo(sid);
   if (!s) return;
+  if (mode === 'cmp') return addCompare(sid);
   if (mode === 'add') {
     const name = `${s.V.disp(s.native)} (${s.V.label})`;
     if (prefs.watch.includes(sid)) { toast(`${name} · 이미 관심 종목에 있어요.`); return; }
@@ -3772,14 +4422,22 @@ $$('.modal').forEach(m => m.addEventListener('pointerdown', e => { if (e.target 
 $('#toRT').addEventListener('click', () => chart.timeScale().scrollToRealTime());
 $('#retryBtn').addEventListener('click', () => load(prefs.sym, prefs.interval));
 document.addEventListener('keydown', e => {
-  const open = ['setDlg', 'syncDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
+  const open = ['setDlg', 'syncDlg', 'chartDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
   if (open) { if (e.key === 'Escape') { e.preventDefault(); closeModal(open); } return; }
   const t = e.target, typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   if (typing) return;
   if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); dwUndo(); return; }
+  if (RP.on && e.shiftKey && e.key === 'ArrowRight') { e.preventDefault(); rpPause(); rpStep(); return; }
+  if (e.key === 'Escape' && RP.picking) { rpCancelPick(); return; }
   if (e.key === 'Escape') { closePops(); if (DW.draft || S.tool !== 'cursor') setTool('cursor'); else { dwSelect(null); selectHline(-1); } return; }
   if (e.ctrlKey || e.metaKey) return;
-  if (e.altKey) { const map = { KeyH: 'hline', KeyT: 'trend', KeyV: 'vline', KeyF: 'fib', KeyM: 'measure' }; if (map[e.code]) { e.preventDefault(); pickTool(map[e.code]); } return; }
+  if (e.altKey) {
+    const map = { KeyH: 'hline', KeyT: 'trend', KeyV: 'vline', KeyF: 'fib', KeyM: 'measure' };
+    if (map[e.code]) { e.preventDefault(); pickTool(map[e.code]); return; }
+    const act = { KeyR: () => $('#resetBtn').click(), KeyG: openGoto, KeyL: () => setScale(prefs.scale === 'log' ? 'n' : 'log'), KeyP: () => setScale(prefs.scale === 'pct' ? 'n' : 'pct'), KeyI: toggleInvert }[e.code];
+    if (act) { e.preventDefault(); act(); }
+    return;
+  }
   if (e.key === 'Delete' || e.key === 'Backspace') {
     if (DW.sel) { e.preventDefault(); dwDelete(DW.sel); return; }
     if (S.selHline >= 0) { e.preventDefault(); removeHline(S.selHline); return; }
@@ -3855,7 +4513,7 @@ async function decodeBundle(text) {
   if (!obj || obj.v !== 1 || !obj.prefs || typeof obj.prefs !== 'object') throw new Error('알아볼 수 없는 설정이에요');
   const clean = (src, fn) => { const o = {}; if (src && typeof src === 'object') for (const [k, v] of Object.entries(src)) if (SYNC_KEY_RE.test(k) && Array.isArray(v)) o[k] = fn(v); return o; };
   obj.dw = clean(obj.dw, list => list.filter(d => d && DW_TOOLS[d.type] && Array.isArray(d.pts) && d.pts.every(p => p && isN(p.t) && isN(p.p))).slice(0, 500).map(d => ({
-    id: String(d.id || newUid()).slice(0, 20), type: d.type, pts: d.pts.slice(0, 4).map(p => ({ t: p.t, p: p.p })),
+    id: String(d.id || newUid()).slice(0, 20), type: d.type, pts: d.pts.slice(0, 8).map(p => ({ t: p.t, p: p.p })), ...(d.lock ? { lock: true } : {}),
     color: d.color === 'fg' || /^#[0-9a-f]{6}$/i.test(d.color) ? d.color : '#2962ff', w: [1, 2, 3, 4].includes(d.w) ? d.w : 1,
     ...(d.type === 'text' ? { text: String(d.text || '').slice(0, 120) } : {}),
   })));
