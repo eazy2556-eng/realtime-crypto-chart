@@ -1709,6 +1709,12 @@ class BandDeco {
 }
 const bandsOf = R => R.def.bands ? R.def.bands(R.inst.p) : 0;
 
+// lightweight-charts 4.2 버그 막기: 점만 찍는 시리즈(이평선 예측점 등)는 화면에 점이 하나도 없어도 '칠하기'를 해서
+// 바로 앞에 그린 선의 경로가 검게 칠해진다 (차트를 옮겨 예측점이 화면 밖으로 나가면 이평선 아래가 검은 덩어리가 됨).
+// 선 시리즈마다 그린 직후 경로를 비우는 그림을 붙여 둔다.
+const PATH_RESET_R = { draw: t => t.useMediaCoordinateSpace(({ context }) => context.beginPath()) };
+const PATH_RESET_V = [{ zOrder: () => 'normal', renderer: () => PATH_RESET_R }];
+const pathReset = () => ({ paneViews: () => PATH_RESET_V, updateAllViews() {} });
 function addPlotSeries(c, R, pl, scaleId) {
   const prec = precOf(R, pl), col = plotColor(R, pl);
   const o = { color: pl.alpha ? hexA(col, pl.alpha) : col, priceLineVisible: false, lastValueVisible: !!R.def.pane && pl.type !== 'hist' && !pl.ext, crosshairMarkerVisible: false, priceFormat: pfOf(prec), visible: !R.inst.hidden };
@@ -1721,7 +1727,9 @@ function addPlotSeries(c, R, pl, scaleId) {
   if (pl.type === 'dots') { o.lineVisible = false; o.pointMarkersVisible = true; o.pointMarkersRadius = pl.radius || 2; o.lastValueVisible = false; }
   if (pl.type === 'step') o.lineType = LC.LineType.WithSteps;
   if (pl.dashed) o.lineStyle = LC.LineStyle.Dashed;
-  return c.addLineSeries(o);
+  const s = c.addLineSeries(o);
+  s.attachPrimitive(pathReset());
+  return s;
 }
 // 지표 하나를 차트(c)에 붙인다. onMain이면 가격 차트 위
 function mountInd(R, c, onMain) {
@@ -1814,6 +1822,7 @@ function createMainSeries() {
   mainSeries.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: volOn ? 0.22 : 0.06 }, mode: scaleModeOf(), invertScale: prefs.invert });
   S.selHline = -1;
   for (const h of S.hlines) h.line = mainSeries.createPriceLine(hlineOpts(h, false));
+  mainSeries.attachPrimitive(pathReset());
   mainSeries.attachPrimitive(drawLayer);
   mainSeries.attachPrimitive(tvLayer);
 }
@@ -1927,7 +1936,7 @@ function mainPoint(i) {
 }
 function syncPaneRanges() {
   const r = chart.timeScale().getVisibleLogicalRange();
-  if (r) for (const P of PANES.values()) P.chart.timeScale().setVisibleLogicalRange(r);
+  if (r) for (const P of PANES.values()) setRangeOf(P.chart, r);
 }
 function renderAll(soft) {
   if (!mainSeries) return;
@@ -2084,16 +2093,18 @@ function renderLegends() {
 $('#lgToggle').addEventListener('click', () => { lgCollapsed = !lgCollapsed; buildLegendRows(); });
 
 // ───────── 차트끼리 시간축 · 십자선 맞추기 ─────────
+// 차트(메인·아래 창)끼리 보이는 범위 맞추기. 맞춰 준 차트가 그 범위를 그리면서 다시 알려 오는데(한 박자 늦게),
+// 그걸 또 보내면 끄는 동안 메인 차트가 한 박자 전 위치로 되돌아가 실제로는 절반만 움직인다(버벅임).
+// 그래서 내가 맞춰 준 범위가 그대로 돌아온 것은 다시 보내지 않는다.
+const LAST_SET = new WeakMap();
+const sameRange = (a, b) => !!(a && b) && Math.abs(a.from - b.from) < 1e-6 && Math.abs(a.to - b.to) < 1e-6;
+function setRangeOf(o, r) { const rr = { from: r.from, to: r.to }; LAST_SET.set(o, rr); o.timeScale().setVisibleLogicalRange(rr); }
 function linkChart(c, el) {
   charts.push(c);
   c.timeScale().subscribeVisibleLogicalRangeChange(r => {
     if (!r) return;
-    if (!syncing) {
-      syncing = true;
-      for (const o of charts) if (o !== c) o.timeScale().setVisibleLogicalRange(r);
-      syncing = false;
-    }
-    onRange();
+    if (!sameRange(r, LAST_SET.get(c))) for (const o of charts) if (o !== c) setRangeOf(o, r);
+    if (c === chart) onRange();
   });
   const enter = () => { hoverChart = c; };
   el.addEventListener('pointerenter', enter);
@@ -2102,14 +2113,22 @@ function linkChart(c, el) {
   c.subscribeCrosshairMove(p => {
     if (c === chart) dwMove(p);
     if (hoverChart !== c) return;
-    if (p.time === undefined || !p.point) { clearCross(); return; }
-    const i = S.tIndex.get(p.time);
-    if (i === undefined) return;
-    hoverIdx = i;
-    for (const o of charts) if (o !== c) setCross(o, i, p.time);
-    renderLegends();
-    mcCrossOut(S.bars[i].t);
+    XH.c = c; XH.p = p; // 마우스가 빨리 움직여도 다른 창 십자선·범례는 한 화면에 한 번만 고친다
+    if (!XH.raf) XH.raf = requestAnimationFrame(xhFlush);
   });
+}
+const XH = { c: null, p: null, raf: 0 };
+function xhFlush() {
+  XH.raf = 0;
+  const { c, p } = XH;
+  if (!c || !p || hoverChart !== c) return;
+  if (p.time === undefined || !p.point) { clearCross(); return; }
+  const i = S.tIndex.get(p.time);
+  if (i === undefined) return;
+  hoverIdx = i;
+  for (const o of charts) if (o !== c) setCross(o, i, p.time);
+  renderLegends();
+  mcCrossOut(S.bars[i].t);
 }
 function setCross(o, i, time) {
   if (typeof o.setCrosshairPosition !== 'function') return;
@@ -3683,24 +3702,23 @@ class TvLayer {
   }
   drawBottom(target) {
     if (!this.series || !S.bars.length || S.loading) return;
-    target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
-      if (prefs.seps && spec.intraday) this.drawSeps(ctx, mediaSize);
-      if (prefs.vp) this.drawVP(ctx, mediaSize);
-    });
+    if (prefs.seps && spec.intraday) target.useBitmapCoordinateSpace(scope => this.drawSeps(scope));
+    if (prefs.vp) target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => this.drawVP(ctx, mediaSize));
   }
-  drawSeps(ctx, size) { // 하루가 바뀌는 곳 (고른 시간대 기준)
+  // 하루가 바뀌는 봉(고른 시간대 기준)에 세로 점선. 격자선·십자선과 같은 봉 한가운데에, 격자선과 같은 방식으로 픽셀을 맞춘다
+  drawSeps({ context: ctx, bitmapSize, horizontalPixelRatio: hr }) {
     const ts = chart.timeScale(), vr = ts.getVisibleLogicalRange(), n = S.bars.length;
     if (!vr || n < 2) return;
-    const i0 = Math.max(1, Math.floor(vr.from)), i1 = Math.min(n - 1, Math.ceil(vr.to));
-    ctx.save(); ctx.strokeStyle = C.muted; ctx.globalAlpha = .55; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath();
+    const i0 = Math.max(1, Math.floor(vr.from)), i1 = Math.min(n - 1, Math.ceil(vr.to)), lw = Math.max(1, Math.floor(hr));
+    ctx.save(); ctx.strokeStyle = C.muted; ctx.globalAlpha = .6; ctx.lineWidth = lw; ctx.setLineDash([3 * lw, 4 * lw]); ctx.beginPath();
     for (let i = i0; i <= i1; i++) {
       if (Math.floor(S.bars[i].time / 86400) === Math.floor(S.bars[i - 1].time / 86400)) continue;
-      const x = ts.logicalToCoordinate(i), xp = ts.logicalToCoordinate(i - 1);
+      const x = ts.logicalToCoordinate(i);
       if (x == null) continue;
-      const xx = Math.round(xp == null ? x : (x + xp) / 2) + .5;
-      ctx.moveTo(xx, 0); ctx.lineTo(xx, size.height);
+      const xx = Math.round(x * hr);
+      ctx.moveTo(xx, 0); ctx.lineTo(xx, bitmapSize.height);
     }
-    ctx.stroke(); ctx.restore();
+    ctx.stroke(); ctx.beginPath(); ctx.restore();
   }
   drawVP(ctx, size) {
     const ts = chart.timeScale(), vr = ts.getVisibleLogicalRange(), n = S.bars.length, s = this.series;
@@ -4028,6 +4046,7 @@ function cmpSetData(c) {
 }
 function cmpAddSeries(c) {
   c.series = chart.addLineSeries({ autoscaleInfoProvider: pzProvider(chart, 'other'), color: c.color, lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerVisible: false, priceFormat: { type: 'price', precision: 8, minMove: 1e-8 } });
+  c.series.attachPrimitive(pathReset());
 }
 function addCompare(sid) {
   if (sid === cur.sid) { toast('지금 보는 종목이에요. 다른 종목을 고르세요.'); return; }
