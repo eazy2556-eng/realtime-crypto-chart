@@ -1416,7 +1416,7 @@ const SID_RE = /^(binance|bitget|okx):(spot|perp):[A-Za-z0-9._-]{2,40}$/;
 const EXTRA_WATCH = ['binance:perp:BTCUSDT', 'bitget:perp:BTCUSDT', 'okx:perp:BTC-USDT-SWAP'];
 const DEFAULTS = {
   sym: 'binance:spot:BTCUSDT', interval: '1m', type: 'candle', scale: 'n', invert: false, theme: 'dark', tab: 'trades',
-  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], alerts: [], layout: { n: '1', syncSym: false, syncIv: false },
+  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], alerts: [], layout: { n: '1', syncSym: false, syncIv: false, syncX: true },
   watch: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'TRXUSDT', 'LINKUSDT', 'AVAXUSDT'].map(s => 'binance:spot:' + s).concat(EXTRA_WATCH),
   favIv: DEFAULT_FAV, customIv: [], magnet: false, keepTool: false, hideDw: false, toolPick: {},
   v: 2, panes: [], paneH: {},
@@ -1482,7 +1482,7 @@ const prefs = (() => {
   p.alerts = (Array.isArray(p.alerts) ? p.alerts : []).filter(a => a && str(a.id) && SID_RE.test(a.sid || '') && ['up', 'down', 'cross'].includes(a.cond)
     && (a.kind === 'price' ? fin(a.price) : a.kind === 'ind' ? a.ind && str(a.ind.uid) && str(a.ind.k) && str(a.iv) && (a.tk ? str(a.tk) : fin(a.tv)) : a.kind === 'draw' ? a.dw && str(a.dw.id) && str(a.dw.key) : false)).slice(0, 50);
   if (!p.layout || typeof p.layout !== 'object') p.layout = {};
-  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv };
+  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false };
   for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
   return p;
 })();
@@ -1819,6 +1819,7 @@ function createMainSeries() {
 }
 // 메인 차트 순서: 거래량 → 캔들 → 나머지 지표(캔들 위). 그다음 창 순서대로 아래 창
 function rebuildIndicators() {
+  rqCancel();
   normalizePanes();
   for (const R of RT.values()) unmountInd(R);
   RT.clear();
@@ -1864,15 +1865,27 @@ function extPoints(R, pl) {
   for (let i = n; i < n + pl.ext; i++) { const q = plotPoint(R, pl, i); if (q.value !== undefined) pts.push(q); }
   return pts;
 }
-function setAllData(R) {
-  for (const pl of R.plots) {
-    const s = R.series[pl.k];
-    if (!s) continue;
-    if (pl.ext) { s.setData(extPoints(R, pl)); continue; }
-    const pts = [];
-    for (let i = Math.max(0, pl.shift || 0), e = plotEnd(pl); i <= e; i++) pts.push(plotPoint(R, pl, i));
-    s.setData(pts);
+function setPlotData(R, pl) {
+  const s = R.series[pl.k];
+  if (!s) return;
+  if (pl.ext) { s.setData(extPoints(R, pl)); return; }
+  const pts = [];
+  for (let i = Math.max(0, pl.shift || 0), e = plotEnd(pl); i <= e; i++) pts.push(plotPoint(R, pl, i));
+  s.setData(pts);
+}
+function setAllData(R) { for (const pl of R.plots) setPlotData(R, pl); }
+// 봉이 많을 때 데이터를 통째로 다시 넣으면 선 하나에 20ms쯤 걸린다 (봉 7천 개 기준, 선이 30개면 0.6초 멈춤).
+// 예전 봉을 붙이거나 지난 봉이 고쳐질 때는 캔들과 아래 창만 바로 넣고, 메인 차트 위 지표 선은 몇 개씩 나눠 넣는다.
+const RQ = { list: [], t: null };
+function rqCancel() { RQ.list = []; clearTimeout(RQ.t); RQ.t = null; }
+function rqStep() {
+  RQ.t = null;
+  const t0 = performance.now();
+  while (RQ.list.length && performance.now() - t0 < 10) {
+    const [R, pl] = RQ.list.shift();
+    if (RT.get(R.inst.uid) === R) { try { setPlotData(R, pl); } catch {} }
   }
+  if (RQ.list.length) RQ.t = setTimeout(rqStep, 16);
 }
 function updateLastData(R) {
   for (const pl of R.plots) {
@@ -1916,15 +1929,21 @@ function syncPaneRanges() {
   const r = chart.timeScale().getVisibleLogicalRange();
   if (r) for (const P of PANES.values()) P.chart.timeScale().setVisibleLogicalRange(r);
 }
-function renderAll() {
+function renderAll(soft) {
   if (!mainSeries) return;
+  rqCancel();
   computeAll();
   const n = S.bars.length;
   S.ha = [];
   const md = new Array(n);
   for (let i = 0; i < n; i++) md[i] = mainPoint(i);
   mainSeries.setData(md);
-  for (const R of RT.values()) setAllData(R);
+  const lazy = soft && n > 1500;
+  for (const R of RT.values()) {
+    if (lazy && R.chart === chart) for (const pl of R.plots) RQ.list.push([R, pl]);
+    else setAllData(R);
+  }
+  if (RQ.list.length) RQ.t = setTimeout(rqStep, 16);
   S.renderedN = S.indRenderedN = n; lastIndAt = performance.now();
   syncPaneRanges();
   renderLegends();
@@ -1951,7 +1970,7 @@ function schedule(full) {
 }
 function flush() {
   rafPending = false;
-  if (needFull) { needFull = needLast = false; renderAll(); }
+  if (needFull) { needFull = needLast = false; renderAll(true); }
   else if (needLast) { needLast = false; renderMainLast(); }
   updatePrice();
   if (LAT.pendingAt != null) { // 수신 → 화면 반영 시간 (탭이 뒤에 있어 멈췄던 시간은 빼고)
@@ -2089,6 +2108,7 @@ function linkChart(c, el) {
     hoverIdx = i;
     for (const o of charts) if (o !== c) setCross(o, i, p.time);
     renderLegends();
+    mcCrossOut(S.bars[i].t);
   });
 }
 function setCross(o, i, time) {
@@ -2104,14 +2124,24 @@ function setCross(o, i, time) {
   try { if (!s || !isN(v)) o.clearCrosshairPosition(); else o.setCrosshairPosition(v, time, s); } catch {}
 }
 function clearCross() {
+  mcCrossOut(null);
   hoverIdx = null;
   for (const o of charts) if (o !== hoverChart && typeof o.clearCrosshairPosition === 'function') { try { o.clearCrosshairPosition(); } catch {} }
   renderLegends();
 }
+// 차트를 끄는 동안에는 예전 봉 받기를 미뤘다가 손을 떼면 받는다 (받는 동안 화면이 잠깐 멈추므로)
+const DRAG = { on: false, pend: false };
+$('.chart-area').addEventListener('pointerdown', () => { DRAG.on = true; }, true);
+for (const ev of ['pointerup', 'pointercancel']) window.addEventListener(ev, () => {
+  if (!DRAG.on) return;
+  DRAG.on = false;
+  if (DRAG.pend) { DRAG.pend = false; setTimeout(onRange, 0); }
+});
+let toRtShown = null;
 function onRange() {
-  const r = chart.timeScale().getVisibleLogicalRange(), n = S.bars.length;
-  $('#toRT').hidden = !(r && n && r.to < n - 2);
-  if (r && r.from < 30) loadOlder();
+  const r = chart.timeScale().getVisibleLogicalRange(), n = S.bars.length, show = !!(r && n && r.to < n - 2);
+  if (show !== toRtShown) { toRtShown = show; $('#toRT').hidden = !show; }
+  if (r && r.from < Math.max(60, (r.to - r.from) * 1.2)) { if (DRAG.on) DRAG.pend = true; else loadOlder(); } // 한 화면쯤 남으면 미리 받는다
 }
 
 // ───────── 거래소 연결 (바이낸스 · 비트겟 · OKX, 현물 · USDT 무기한 선물) ─────────
@@ -2585,7 +2615,11 @@ function placeBar(bar, E) {
   const n = S.bars.length, last = S.bars[n - 1];
   if (bar.t === last.t) { tradeOverride(bar, E); S.bars[n - 1] = bar; schedule(false); }
   else if (bar.t > last.t) { pushBar(bar); schedule(false); }
-  else { const i = S.tIndex.get(bar.time); if (i !== undefined) { S.bars[i] = bar; schedule(true); } }
+  else { // 지난 봉의 마감 값: 같으면 그냥 두고, 다르면 고친다 (다시 그리기는 나눠서)
+    const i = S.tIndex.get(bar.time), o = i !== undefined && S.bars[i];
+    if (!o || (o.open === bar.open && o.high === bar.high && o.low === bar.low && o.close === bar.close && o.volume === bar.volume)) return;
+    S.bars[i] = bar; schedule(true);
+  }
 }
 function onKline(ev) {
   if (RP.on || S.loading || !S.raw.length || ev.iv !== spec.base) return;
@@ -2767,7 +2801,7 @@ async function loadOlder() {
   S.older = true;
   const token = S.token, sp = spec;
   try {
-    const first = S.raw[0].t, rr = await fetchRaw(sp, first - 1, 400);
+    const first = S.raw[0].t, rr = await fetchRaw(sp, first - 1, 1000); // 한 번에 많이 받아 받는 횟수를 줄인다
     if (token !== S.token) return;
     const older = rr.raw.filter(b => b.t < first);
     if (rr.exhausted) S.noMore = true;
@@ -2776,7 +2810,7 @@ async function loadOlder() {
     S.raw = older.concat(S.raw); buildBars();
     const added = S.bars.length - before;
     if (hoverIdx != null) hoverIdx += added;
-    renderAll();
+    renderAll(true);
     if (r) chart.timeScale().setVisibleLogicalRange({ from: r.from + added, to: r.to + added });
   } catch (e) { console.warn(e); }
   finally { if (token === S.token) S.older = false; }
@@ -2936,7 +2970,7 @@ const FIB = [[0, '#787b86'], [0.236, '#f23645'], [0.382, '#ff9800'], [0.5, '#4ca
 const FIBX = [[0, '#787b86'], [0.382, '#f23645'], [0.618, '#ff9800'], [1, '#089981'], [1.272, '#00bcd4'], [1.618, '#2962ff'], [2, '#ab47bc'], [2.618, '#f23645']];
 const FONT = '11px "IBM Plex Sans KR", -apple-system, "Segoe UI", "Malgun Gothic", sans-serif';
 const EXT = 1e5;
-const DW = { list: [], sel: null, draft: null, drag: null, undo: [], justDragged: false };
+const DW = { list: [], sel: null, draft: null, drag: null, undo: [], justDragged: false, qm: null }; // qm: Shift+클릭 임시 측정
 
 // 시간(ms) ↔ 차트 칸 번호. 봉이 없는 미래·과거는 봉 길이로 늘려서 계산
 function tToLogical(t) {
@@ -3211,6 +3245,8 @@ function drawOne(ctx, d, size, sel) {
       const dp = pts[1].p - pts[0].p, pc = pts[0].p ? dp / pts[0].p * 100 : 0, bars = Math.round(tToLogical(pts[1].t) - tToLogical(pts[0].t));
       tag(ctx, `${dp >= 0 ? '+' : ''}${fp(dp)} (${fpct(pc)})`, mx, r.y2 + 14, c, 'center');
       tag(ctx, `${Math.abs(bars)}봉 · ${fmtDur(pts[1].t - pts[0].t)}`, mx, r.y2 + 34, c, 'center');
+      const l0 = tToLogical(pts[0].t), l1 = tToLogical(pts[1].t), i0 = Math.max(0, Math.round(Math.min(l0, l1))), i1 = Math.min(S.bars.length - 1, Math.round(Math.max(l0, l1)));
+      if (i1 >= i0) { let vol = 0; for (let i = i0; i <= i1; i++) vol += S.bars[i].volume; tag(ctx, `거래량 ${fvol(vol)}`, mx, r.y2 + 54, c, 'center'); }
       break;
     }
     case 'long': case 'short': {
@@ -3250,6 +3286,7 @@ class DrawLayer {
     target.useMediaCoordinateSpace(({ context: ctx, mediaSize }) => {
       if (!prefs.hideDw) for (const d of DW.list) drawOne(ctx, d, mediaSize, d.id === DW.sel);
       if (DW.draft) drawOne(ctx, DW.draft, mediaSize, true);
+      if (DW.qm) drawOne(ctx, DW.qm, mediaSize, false);
     });
   }
 }
@@ -3260,7 +3297,7 @@ const dwRedraw = () => { if (drawLayer.req) drawLayer.req(); };
 function dwLoad() {
   const arr = store.get('bc:dw:' + symKey(), []);
   DW.list = (Array.isArray(arr) ? arr : []).filter(d => d && DW_TOOLS[d.type] && Array.isArray(d.pts) && d.pts.every(p => isN(p.t) && isN(p.p)));
-  DW.sel = null; DW.draft = null; DW.undo = [];
+  DW.sel = null; DW.draft = null; DW.undo = []; DW.qm = null;
   renderDwBar(); dwRedraw();
 }
 const dwSave = () => { store.set('bc:dw:' + symKey(), DW.list); if (SYNC.onChange) SYNC.onChange(); };
@@ -3352,7 +3389,9 @@ function dwPlace(x, y) {
   dwRedraw();
 }
 function dwMove(p) {
-  if (!DW.draft || !p.point) return;
+  if (!p.point) return;
+  if (DW.qm && !DW.qm.done) { DW.qm.ghost = anchorAt(p.point.x, p.point.y); dwRedraw(); }
+  if (!DW.draft) return;
   DW.draft.ghost = anchorAt(p.point.x, p.point.y);
   dwRedraw();
 }
@@ -3435,7 +3474,7 @@ function brushStart(e) {
 }
 $('#mainChart').addEventListener('pointerdown', e => {
   if (FREE.includes(S.tool) && e.button === 0 && mainSeries && !RP.picking) return brushStart(e);
-  if (S.tool !== 'cursor' || RP.picking || e.button !== 0 || !mainSeries) return;
+  if (S.tool !== 'cursor' || RP.picking || e.shiftKey || DW.qm || e.button !== 0 || !mainSeries) return; // Shift+클릭은 측정
   const r = $('#mainChart').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
   const hit = dwHit(x, y);
   if (!hit) return;
@@ -3540,19 +3579,34 @@ function toast(msg, kind = 'info') {
 // 차트 라이브러리의 클릭 이벤트는 빠른 두 번 클릭을 더블클릭으로 묶어 버려서, 클릭을 직접 판별한다
 let tap = null;
 const chartXY = e => { const r = $('#mainChart').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-$('#mainChart').addEventListener('pointerdown', e => { if (e.button === 0) tap = chartXY(e); }, true);
+$('#mainChart').addEventListener('pointerdown', e => { if (e.button === 0) { tap = chartXY(e); tap.shift = e.shiftKey; } }, true);
 $('#mainChart').addEventListener('pointerup', e => {
   if (!tap || e.button !== 0) return;
-  const q = chartXY(e), ok = Math.hypot(q.x - tap.x, q.y - tap.y) < 6;
+  const q = chartXY(e), ok = Math.hypot(q.x - tap.x, q.y - tap.y) < 6, shift = tap.shift || e.shiftKey;
   tap = null;
-  if (ok) onChartTap(q.x, q.y);
+  if (ok) onChartTap(q.x, q.y, shift);
 }, true);
-function onChartTap(x, y) {
+function onChartTap(x, y, shift) {
   if (!mainSeries || !S.bars.length) return;
   if (DW.justDragged) { DW.justDragged = false; return; }
   const ts = chart.timeScale();
   if (x > paneW(chart) || y > $('#mainChart').clientHeight - ts.height()) return; // 가격 축·시간 축 위는 무시
   if (RP.picking) return rpBegin(x);
+  if (DW.qm) { // Shift+클릭 측정: 다음 클릭에서 끝나고, 그다음 클릭에서 사라진다
+    if (!DW.qm.done) { const a = anchorAt(x, y); if (a) { DW.qm.pts[1] = a; delete DW.qm.ghost; DW.qm.done = true; } }
+    else DW.qm = null;
+    if (S.tool === 'cursor') $('#drawHint').hidden = true;
+    dwRedraw();
+    if (!shift || DW.qm) return;
+  }
+  if (shift && S.tool === 'cursor') { // 트레이딩뷰처럼 Shift+클릭으로 바로 측정 (저장하지 않음)
+    const a = anchorAt(x, y);
+    if (!a) return;
+    DW.qm = { id: 'qm', type: 'measure', pts: [a], color: '#2962ff', w: 1 };
+    const h = $('#drawHint'); h.textContent = '측정: 끝낼 곳을 클릭하세요 · Esc 취소'; h.hidden = false;
+    dwRedraw();
+    return;
+  }
   if (S.tool === 'hline') {
     const raw = mainSeries.coordinateToPrice(y);
     if (raw == null || !isFinite(raw)) return;
@@ -4059,10 +4113,24 @@ function pzScale(c, r, k) { // 가운데를 기준으로 k배
   if (!(half > 0) || !isFinite(half)) return r;
   return { min: pzOut(c, mid - half), max: pzOut(c, mid + half) };
 }
+// 가격 축 설정을 다시 적용하면 차트 전체를 무겁게 다시 그려서, 시간축을 제자리에 다시 두는 가벼운 갱신으로
+// 가격 범위만 다시 계산하게 한다. 한 화면(프레임)에 한 번만
+const pzQ = new Set();
+let pzRaf = 0;
+function pzKick(c) {
+  pzQ.add(c);
+  if (pzRaf) return;
+  pzRaf = requestAnimationFrame(() => {
+    pzRaf = 0;
+    for (const x of pzQ) { try { const ts = x.timeScale(); ts.scrollToPosition(ts.scrollPosition(), false); } catch {} }
+    pzQ.clear();
+  });
+}
 function pzSet(c, r) {
-  if (r) PZR.set(c, r); else if (!PZR.delete(c)) return;
-  c.priceScale('right').applyOptions({ autoScale: true }); // 자동 맞춤을 다시 계산하게
-  syncPzPill();
+  const had = PZR.has(c);
+  if (r) PZR.set(c, r); else if (had) PZR.delete(c); else return;
+  pzKick(c);
+  if (c === chart && had !== !!r) syncPzPill();
 }
 function pzResetAll() { for (const c of [...PZR.keys()]) pzSet(c, null); }
 function syncPzPill() { $('#pzAuto').hidden = !PZR.has(chart); }
@@ -4107,8 +4175,7 @@ $('.chart-area').addEventListener('pointerdown', e => {
     const p = s.coordinateToPrice(ev.clientY - top);
     if (p == null) return;
     const d = pzIn(t.c, p0) - pzIn(t.c, p);
-    PZR.set(t.c, { min: pzOut(t.c, pzIn(t.c, r0.min) + d), max: pzOut(t.c, pzIn(t.c, r0.max) + d) });
-    t.c.priceScale('right').applyOptions({ autoScale: true });
+    PZR.set(t.c, { min: pzOut(t.c, pzIn(t.c, r0.min) + d), max: pzOut(t.c, pzIn(t.c, r0.max) + d) }); // 끄는 동안 차트가 알아서 범위를 다시 계산한다
   };
   const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
   window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
@@ -4369,7 +4436,7 @@ syncAlertBadge();
 // 칸마다 종목·시간 단위·지표를 따로 저장한다. 테마·캔들 색·시간대 같은 모양 설정은 첫 칸을 따른다.
 const MC_LAYOUTS = [['1', '1칸'], ['2v', '좌우 2칸'], ['2h', '위아래 2칸'], ['3', '3칸'], ['4', '4칸']];
 const MC_CELLS = { 1: 1, '2v': 2, '2h': 2, 3: 3, 4: 4 };
-const MC = { applying: false, frames: [], look: '', lt: null, wide: null };
+const MC = { applying: false, frames: [], look: '', lt: null, wide: null, xPend: undefined, xLast: undefined, xRaf: 0, xIn: false, xHid: false };
 const mcOrigin = location.origin === 'null' ? '*' : location.origin; // 파일로 열었을 때는 출처가 없다
 const mcWide = () => innerWidth >= 900;
 const lookSig = () => JSON.stringify(LOOK_KEYS.map(k => prefs[k]));
@@ -4399,6 +4466,7 @@ function buildLayoutPop() {
     + MC_LAYOUTS.map(([v, l]) => `<button type="button" class="mc-opt" data-mcl="${v}" aria-pressed="${L.n === v}">${mcIcon(v)}<span>${l}</span></button>`).join('') + '</div>'
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncSym"${L.syncSym ? ' checked' : ''}><span>모든 칸 같은 종목<small>한 칸에서 종목을 바꾸면 다른 칸도 바뀌어요</small></span></label>`
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncIv"${L.syncIv ? ' checked' : ''}><span>모든 칸 같은 시간 단위</span></label>`
+    + `<label class="cs-chk"><input type="checkbox" data-mcs="syncX"${L.syncX ? ' checked' : ''}><span>십자선 맞추기<small>마우스를 올린 칸과 같은 시각에 다른 칸도 세로 점선을 그려요</small></span></label>`
     + `<p class="pop-hint">${mcWide() ? '칸마다 종목·시간 단위·지표·작도 도구를 따로 써요. 왼쪽 위 칸이 오른쪽 시세 패널과 이어져 있어요.' : '멀티 차트는 가로 900px 이상인 넓은 화면에서 보여요. (휴대폰은 한 칸)'}</p>`;
 }
 $('#layoutPop').addEventListener('click', e => {
@@ -4430,6 +4498,43 @@ function mcGo(m) {
   MC.applying = true;
   try { load(sid, iv); } finally { MC.applying = false; }
 }
+// 칸끼리 십자선 맞추기: 마우스가 있는 칸의 시각(ms)을 다른 칸에 보내 같은 시각에 세로 점선을 그린다
+function mcCrossOut(t) {
+  if (!EMBED && !MC.frames.length) return;
+  MC.xPend = t;
+  if (MC.xRaf) return;
+  MC.xRaf = requestAnimationFrame(() => { // 한 화면에 한 번만 보낸다
+    MC.xRaf = 0;
+    const v = MC.xPend;
+    if (v === MC.xLast) return;
+    MC.xLast = v;
+    if (EMBED) window.parent.postMessage({ bc: 'xh', t: v }, mcOrigin); else mcCrossSpread(0, v);
+  });
+}
+function mcCrossSpread(from, t) {
+  if (!prefs.layout.syncX) return;
+  MC.frames.forEach((f, i) => { if (i + 1 !== from && f.contentWindow) f.contentWindow.postMessage({ bc: 'xh', t }, mcOrigin); });
+  if (from !== 0) mcCrossIn(t);
+}
+function mcCrossIn(t) {
+  if (!mainSeries || !S.bars.length || hoverChart) return; // 이 칸에 마우스가 있으면 그대로 둔다
+  const b = S.bars, n = b.length;
+  if (t == null || !isN(t) || t < b[0].t || t >= nextBucket(b[n - 1].t, spec)) {
+    if (MC.xIn) { MC.xIn = false; hoverIdx = null; for (const o of charts) { try { o.clearCrosshairPosition(); } catch {} } renderLegends(); }
+    return;
+  }
+  let lo = 0, hi = n - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (b[m].t <= t) lo = m; else hi = m - 1; }
+  if (!MC.xHid) { MC.xHid = true; for (const o of charts) o.applyOptions({ crosshair: { horzLine: { visible: false, labelVisible: false } } }); } // 다른 칸에서 온 십자선은 세로 점선만
+  MC.xIn = true; hoverIdx = lo;
+  for (const o of charts) setCross(o, lo, b[lo].time);
+  renderLegends();
+}
+$('.chart-area').addEventListener('pointerover', () => { // 이 칸에 마우스가 오면 가로 점선을 다시 보인다
+  if (!MC.xHid) return;
+  MC.xHid = false; MC.xIn = false;
+  for (const o of charts) o.applyOptions({ crosshair: { horzLine: { visible: true, labelVisible: true } } });
+}, true);
 window.addEventListener('message', e => {
   const m = e.data;
   if (!m || typeof m !== 'object' || typeof m.bc !== 'string') return;
@@ -4438,10 +4543,12 @@ window.addEventListener('message', e => {
     if (e.source !== window.parent) return;
     if (m.bc === 'look') location.reload(); // 첫 칸의 모양 설정이 바뀜
     else if (m.bc === 'go') mcGo(m);
+    else if (m.bc === 'xh') mcCrossIn(m.t);
     return;
   }
   const i = MC.frames.findIndex(f => f.contentWindow === e.source);
   if (i >= 0 && m.bc === 'moved') mcSpread(i + 1, m.sym, m.iv);
+  else if (i >= 0 && m.bc === 'xh') mcCrossSpread(i + 1, m.t);
 });
 if (!EMBED) {
   MC.look = lookSig();
@@ -5062,6 +5169,7 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); dwUndo(); return; }
   if (RP.on && e.shiftKey && e.key === 'ArrowRight') { e.preventDefault(); rpPause(); rpStep(); return; }
   if (e.key === 'Escape' && RP.picking) { rpCancelPick(); return; }
+  if (e.key === 'Escape' && DW.qm) { DW.qm = null; $('#drawHint').hidden = true; dwRedraw(); return; }
   if (e.key === 'Escape') { closePops(); if (DW.draft || S.tool !== 'cursor') setTool('cursor'); else { dwSelect(null); selectHline(-1); } return; }
   if (e.ctrlKey || e.metaKey) return;
   if (e.altKey) {
