@@ -28,6 +28,39 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('pointerdown', e => { if (!e.target.closest('.pop, [data-pop], [data-flyout]')) closePops(); });
 window.addEventListener('resize', closePops);
+// 창이 좁아 위쪽 줄(휴대폰은 도구 줄도)이 좌우로 넘치면: 마우스 휠이나 끌기로 좌우로 움직이고, 넘친 쪽 끝을 흐리게 보여 준다
+function hScroll(el) {
+  const room = () => el.scrollWidth - el.clientWidth;
+  const edge = () => { const ov = room(); el.classList.toggle('ov-l', ov > 1 && el.scrollLeft > 1); el.classList.toggle('ov-r', ov > 1 && el.scrollLeft < ov - 1); };
+  let er = 0;
+  const edgeSoon = () => { if (!er) er = requestAnimationFrame(() => { er = 0; edge(); }); }; // 버튼이 나중에 채워지거나 바뀌어도 다시 본다
+  el.addEventListener('scroll', edge, { passive: true });
+  window.addEventListener('resize', edgeSoon);
+  new MutationObserver(edgeSoon).observe(el, { childList: true, subtree: true });
+  el.addEventListener('wheel', e => {
+    if (room() <= 1 || el.scrollHeight > el.clientHeight + 1 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // 위아래로 넘치는 줄(PC 도구 줄)은 그대로
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  }, { passive: false });
+  let drag = null;
+  el.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0 && room() > 1) drag = { x: e.clientX, s: el.scrollLeft, moved: false }; });
+  window.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 6) return;
+    drag.moved = true; el.scrollLeft = drag.s - dx;
+  });
+  window.addEventListener('pointerup', () => {
+    if (drag && drag.moved) { // 끈 뒤에는 버튼이 눌리지 않게
+      const stop = ev => { ev.stopPropagation(); ev.preventDefault(); };
+      el.addEventListener('click', stop, { capture: true, once: true });
+      setTimeout(() => el.removeEventListener('click', stop, true), 50);
+    }
+    drag = null;
+  });
+  edge();
+}
+hScroll($('.topbar')); hScroll($('#tools'));
 
 // ───────── 작도 도구 막대 ─────────
 const STAR = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5l1.9 4 4.4.5-3.3 3 .9 4.3L8 11.1l-3.9 2.2.9-4.3-3.3-3 4.4-.5z"/></svg>';

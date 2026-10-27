@@ -234,6 +234,19 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 .calc-eq{align-self:center;color:var(--muted);font-size:14px;line-height:1}
 .calc-note{font-size:11px;color:var(--muted);margin:0}
 .calc-note:empty{display:none}
+/* PC에서 창을 작게 줄였을 때: 최소 높이를 두고 페이지 전체를 위아래로 움직일 수 있게. 왼쪽 도구 줄·오른쪽 패널은 넘치면 안에서 스크롤 */
+@media (min-width:901px){
+  body{overflow:auto}
+  .app{min-height:620px}
+  .tools{overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:none}
+  .tools::-webkit-scrollbar{display:none}
+  .side{overflow-y:auto}
+}
+.embed .app{min-height:0!important}
+/* 위쪽 줄(휴대폰은 도구 줄도)이 넘치면 넘친 쪽 끝을 흐리게: 휠이나 마우스로 끌어서 좌우로 움직인다 */
+.topbar.ov-r,.tools.ov-r{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)}
+.topbar.ov-l,.tools.ov-l{-webkit-mask-image:linear-gradient(to left,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to left,#000 calc(100% - 32px),transparent)}
+.topbar.ov-l.ov-r,.tools.ov-l.ov-r{-webkit-mask-image:linear-gradient(to right,transparent,#000 32px,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to right,transparent,#000 32px,#000 calc(100% - 32px),transparent)}
 /* 스토캐스틱 3중: 칸별 이름표와 값 */
 .band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
 .band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
