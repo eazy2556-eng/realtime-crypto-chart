@@ -1,0 +1,480 @@
+<body>
+<style>
+/* 작도 도구 · 지연 표시 */
+.tool-wrap{position:relative;flex:none}
+.tool-wrap .caret{position:absolute;right:0;bottom:0;width:13px;height:13px;display:grid;place-items:end;padding:2px;color:var(--muted);border-radius:3px}
+.tool-wrap .caret svg{width:6px;height:6px}
+.tool-wrap .caret:hover,.tool-wrap .caret[aria-expanded="true"]{color:var(--fg);background:var(--raise-2)}
+.tool-pop{min-width:220px}
+.tool-pop .pop-item svg{width:18px;height:18px;flex:none}
+.tool-pop .pop-item[aria-checked="true"]{color:var(--accent)}
+.tool-pop .key{margin-left:auto;font-size:11px;color:var(--muted)}
+.dw-bar{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--raise);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.dw-bar .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;flex:none}
+.dw-bar .sw[aria-pressed="true"]{border-color:var(--fg)}
+.dw-bar .wbtn{height:24px;min-width:26px;padding:0 6px;border-radius:5px;font-size:12px;color:var(--muted)}
+.dw-bar .wbtn[aria-pressed="true"]{background:var(--raise-2);color:var(--fg)}
+.dw-bar .icon-btn{width:28px;height:28px}
+.dw-bar .icon-btn svg{width:16px;height:16px}
+.dw-bar .vs{width:1px;height:18px;background:var(--line);margin:0 2px}
+.dw-text{position:absolute;z-index:8;display:flex;gap:6px;padding:6px;background:var(--raise);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.dw-text input{width:200px}
+.conn{border-radius:6px;height:30px}
+.conn:hover{background:var(--raise)}
+.conn-lat{font-variant-numeric:tabular-nums;color:var(--muted)}
+.lat-pop{width:320px;padding:12px 14px}
+.lat-big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.lat-grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:10px 0 8px;font-size:12px}
+.lat-grid dt{color:var(--muted)}
+.lat-grid dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.lat-note{font-size:11px;color:var(--muted);margin:0;line-height:1.5}
+/* 지표 옮기기 */
+.lg-name{cursor:grab;touch-action:none;user-select:none}
+.ind-dragging,.ind-dragging *{cursor:grabbing!important;user-select:none}
+.move-pop{min-width:260px;max-width:340px;z-index:55}
+.move-pop .pop-item{white-space:normal}
+.move-pop .note{margin-left:auto;font-size:11px;color:var(--muted);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop-hint{margin:6px 10px 4px;font-size:11px;color:var(--muted);line-height:1.5}
+.drag-ghost{position:fixed;z-index:70;pointer-events:none;padding:4px 10px;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;box-shadow:var(--shadow);white-space:nowrap}
+.drop-mark{position:fixed;z-index:65;pointer-events:none;border-radius:4px}
+.drop-mark.into{border:2px solid var(--accent);background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:600;font-size:13px}
+.drop-mark.line{background:var(--accent)}
+.fld.check{flex-direction:row;align-items:center;gap:8px;grid-column:1/-1}
+.fld.check input{width:16px;height:16px;accent-color:var(--accent)}
+.fld.check>span{font-size:13px;color:var(--fg)}
+.plot-row{grid-column:1/-1;flex-direction:row;align-items:center;gap:10px}
+.plot-row input[type=color]{width:36px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px;cursor:pointer;flex:none}
+.plot-row>span{flex:1;min-width:0;font-size:13px;color:var(--fg)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plot-row select{width:76px;flex:none}
+.fld-note{grid-column:1/-1;margin:0;font-size:11px;color:var(--muted)}
+/* 거래소 표시 */
+.ex-badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:4px;background:var(--raise);color:var(--muted);white-space:nowrap}
+.ex-badge[data-ex="binance"]{color:#f0b90b}
+.ex-badge[data-ex="bitget"]{color:#00c6c2}
+.ex-badge[data-ex="okx"]{color:var(--fg)}
+.w-ex{margin-left:5px;font-size:10px;font-weight:500;padding:0 4px;border-radius:3px;background:var(--raise);color:var(--muted)}
+.w-ex[data-ex="binance"]{color:#f0b90b}
+.w-ex[data-ex="bitget"]{color:#00c6c2}
+.vtabs{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{height:30px;padding:0 12px;font-size:12px;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+/* 설정 옮기기 */
+.sync-card{width:min(560px,100%)}
+.sync-body{padding:0 18px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.sync-sec{display:flex;flex-direction:column;gap:8px}
+.sync-sec+.sync-sec{border-top:1px solid var(--line);padding-top:16px}
+.sync-sec h3{margin:0;font-size:14px;font-weight:600}
+.sync-sum{margin:0;font-size:13px;color:var(--fg)}
+.sync-hint,.sync-warn{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+.sync-warn{color:var(--warn)}
+.sync-arrive{margin:0;font-weight:600}
+.sync-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sync-code{width:100%;height:auto;padding:8px;font-family:var(--mono);font-size:11px;resize:vertical;word-break:break-all}
+.sync-qr{align-self:center;background:#fff;color:#131722;padding:12px;border-radius:8px;text-align:center;width:min(300px,100%)}
+.sync-qr svg{display:block;width:100%;height:auto}
+.sync-qr p{margin:6px 0 0;font-size:12px}
+.sync-confirm{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
+.file-btn{position:relative;display:inline-flex;align-items:center;cursor:pointer}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+/* 자동 연동 */
+#syncBtn{position:relative}
+#syncBtn[data-cloud="on"]::after,#syncBtn[data-cloud="err"]::after{content:"";position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--up);box-shadow:0 0 0 2px var(--bg)}
+#syncBtn[data-cloud="err"]::after{background:var(--down)}
+#syncBtn[data-cloud="wait"]::after{content:"";position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.cl-status[data-state="wait"]{color:var(--accent)}
+.cl-status{font-size:12px;font-weight:500;color:var(--muted);margin-left:6px}
+.cl-status[data-state="ok"]{color:var(--up)}
+.cl-status[data-state="err"]{color:var(--down)}
+.cl-steps{margin:0;padding-left:20px;font-size:12px;color:var(--muted);line-height:1.6;display:flex;flex-direction:column;gap:4px}
+.cl-steps a{color:var(--accent)}
+.cl-steps code{font-family:var(--mono);color:var(--fg)}
+.cl-steps b{color:var(--fg);font-weight:600}
+.cl-token{flex:1;min-width:180px;font-family:var(--mono)}
+.cl-share{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--fg)}
+.cl-share input{width:16px;height:16px;accent-color:var(--accent)}
+#clMsg:empty{display:none}
+#clMsg.bad{color:var(--down)}
+.cloud-bar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:58;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 12px;border-radius:10px;background:var(--raise);border:1px solid var(--accent);box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+/* 트레이딩뷰식 추가 기능 */
+.tz-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 8px;border-radius:6px;font-size:12px;color:var(--muted);white-space:nowrap;flex:none}
+.tz-btn:hover,.tz-btn[aria-expanded="true"]{background:var(--raise-2);color:var(--fg)}
+#tzClock{font-variant-numeric:tabular-nums;color:var(--fg)}
+.tz-pop{max-height:min(72vh,600px);overflow-y:auto;width:290px}
+.tz-item b{font-weight:600;min-width:62px;font-variant-numeric:tabular-nums}
+.bc-list{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;padding:2px 10px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.bc-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.bc-row b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+.bc-row.on span,.bc-row.on b{color:var(--accent);font-weight:600}
+.tz-item .muted{font-size:12px;white-space:normal}
+.goto-pop{width:300px}
+.goto-form{display:flex;gap:6px;padding:4px 8px}
+.goto-form .field{flex:1;min-width:0;color-scheme:dark}
+[data-theme="light"] .goto-form .field{color-scheme:light}
+.cs-card{width:min(500px,100%)}
+.cs-body{padding:0 18px 18px;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:16px}
+.cs-sec{display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+.cs-sec+.cs-sec{border-top:1px solid var(--line);padding-top:14px}
+.cs-sec h3{margin:0;font-size:14px;font-weight:600}
+.cs-sec .seg{flex-wrap:wrap;max-width:100%}
+.cs-sec select{width:100%}
+.cs-colors{display:flex;gap:18px}
+.cs-chk{display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer;line-height:1.4}
+.cs-chk input{width:16px;height:16px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.cs-chk small{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+@media (max-width:640px){#tzClock{display:none}.tz-btn{padding:0 6px}}
+.dw-bar .wbtn{white-space:nowrap}
+.lg-cmp{display:flex;flex-wrap:wrap;gap:4px 8px;pointer-events:auto}
+.lg-cmp[hidden]{display:none}
+.cmp-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:var(--raise);border-radius:4px;padding:1px 2px 1px 6px}
+.cmp-chip i{width:8px;height:8px;border-radius:50%;flex:none}
+.cmp-chip em{font-style:normal;color:var(--down);font-size:11px}
+.cmp-chip button{width:18px;height:18px;display:grid;place-items:center;border-radius:3px;color:var(--muted)}
+.cmp-chip button:hover{background:var(--raise-2);color:var(--fg)}
+.cmp-chip button svg{width:11px;height:11px}
+.rp-bar{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--raise);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);white-space:nowrap;max-width:calc(100% - 16px);overflow-x:auto}
+.rp-bar[hidden]{display:none}
+.rp-bar .icon-btn{width:30px;height:30px}
+.rp-bar .icon-btn svg{width:15px;height:15px}
+.rp-bar .seg button{height:26px;padding:0 8px}
+.rp-tag{font-size:11px;font-weight:600;color:#fff;background:var(--accent);border-radius:4px;padding:2px 6px}
+.rp-time{font-size:12px;font-weight:600}
+.rp-left{font-size:11px}
+.rp-exit{height:28px;padding:0 10px}
+/* 가격 축 늘이기·줄이기 */
+.pz-auto{position:absolute;right:6px;bottom:34px;z-index:6;height:22px;padding:0 9px;border-radius:11px;font-size:11px;font-weight:600;background:var(--accent);color:#fff;box-shadow:var(--shadow)}
+.pz-auto[hidden]{display:none}
+.chart-area .chart table tr:first-child>td:last-child,.chart-area .chart table tr:first-child>td:last-child *{touch-action:none;cursor:ns-resize}
+/* 브러시: 그리는 동안 화면이 스크롤되지 않게 */
+.main-pane.brushing .chart,.main-pane.brushing .chart *{touch-action:none!important;cursor:crosshair}
+/* 알림 */
+#alertBtn{position:relative}
+.al-badge{position:absolute;right:1px;top:1px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--down);color:#fff;font-size:10px;font-weight:700;line-height:15px;text-align:center}
+.al-badge[hidden]{display:none}
+.al-card{width:min(580px,100%)}
+.al-body{padding:0 18px 18px;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:16px}
+.al-sec{display:flex;flex-direction:column;gap:9px;align-items:stretch}
+.al-sec+.al-sec{border-top:1px solid var(--line);padding-top:14px}
+.al-sec h3{margin:0;font-size:14px;font-weight:600}
+.al-sec h3 small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+.al-sec>.seg{align-self:flex-start}
+.al-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.al-form .wide{grid-column:1/-1}
+.al-form [hidden]{display:none}
+.al-list,.al-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.al-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:12.5px}
+.al-item.off{opacity:.55}
+.al-dot{width:8px;height:8px;border-radius:50%;background:var(--up);flex:none}
+.al-item.off .al-dot{background:var(--muted)}
+.al-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.al-txt small{color:var(--muted);font-size:11px}
+.al-item .btn-ghost{height:28px;padding:0 10px;font-size:12px;flex:none}
+.al-log li{display:flex;gap:10px;font-size:12px;line-height:1.45}
+.al-log time{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
+.al-empty{color:var(--muted);font-size:12px;margin:0}
+@media (max-width:640px){.al-form{grid-template-columns:1fr}}
+/* 멀티 차트 */
+.mc-grid{grid-area:chart;display:flex;flex-direction:column;min-width:0;min-height:0}
+.mc-grid>.chart-area{flex:1 1 auto;grid-area:auto}
+.mc-grid.mc-on{display:grid;gap:3px;background:var(--line)}
+.mc-grid.mc-on>.chart-area,.mc-cell{background:var(--bg);min-width:0;min-height:0}
+.mc-cell{border:0;width:100%;height:100%;display:block}
+.mc-grid.l-2v{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr)}
+.mc-grid.l-2h{grid-template-columns:minmax(0,1fr);grid-template-rows:1fr 1fr}
+.mc-grid.l-3{grid-template-columns:1.3fr 1fr;grid-template-rows:1fr 1fr}
+.mc-grid.l-3>.chart-area{grid-row:1/3}
+.mc-grid.l-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+#layoutBtn svg{width:20px;height:15px}
+#layoutBtn[aria-pressed="true"]{color:var(--accent)}
+.layout-pop{width:300px}
+.mc-opts{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px 8px 8px}
+.mc-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border-radius:6px;font-size:10.5px;color:var(--muted);border:1px solid transparent;white-space:nowrap}
+.mc-opt svg{width:30px;height:22px}
+.mc-opt:hover{background:var(--raise-2)}
+.mc-opt[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.layout-pop .cs-chk{padding:5px 10px}
+@media (max-width:900px){.mc-grid,.mc-grid.mc-on{display:block}.mc-cell{display:none}}
+/* 멀티 차트의 다른 칸 (같은 앱을 작게 띄운 것) */
+html.embed,html.embed body{height:100%!important;overflow:hidden!important}
+.embed .app{height:100%!important;grid-template-columns:40px minmax(0,1fr)!important;grid-template-rows:40px minmax(0,1fr)!important;grid-template-areas:"top top" "tools chart"!important}
+.embed .side,.embed #syncBtn,.embed #fsBtn,.embed #themeBtn,.embed #chartSetBtn,.embed #tzBtn,.embed #layoutBtn,.embed #alertBtn,.embed .conn-lat,.embed .conn-text{display:none!important}
+.embed .topbar{padding:0 4px}
+.embed .tb-btn>span{display:none}
+.embed .tools{flex-direction:column!important;padding:4px 0!important;border-right:1px solid var(--line)!important;border-bottom:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none}
+.embed .tools::-webkit-scrollbar{display:none}
+.embed .tools .hsep{width:22px!important;height:1px!important;margin:2px 0!important}
+.embed .mc-grid{display:flex!important}
+.embed .chart-area{overflow-x:hidden!important;overflow-y:auto!important}
+.embed .main-pane{flex:1 1 auto!important;height:auto!important;min-height:140px!important}
+.embed .legend{right:70px}
+/* 작은 칸: 아래 지표 창은 남는 높이를 나눠 쓴다 */
+.embed .chart-area{display:flex;flex-direction:column;overflow:hidden!important}
+.embed .main-pane{flex:1.4 1 0!important;min-height:120px!important}
+.embed .panes{flex:1 1 0;min-height:0}
+.embed .panes:empty{display:none}
+.embed .sub-pane{flex:1 1 0;height:auto!important;min-height:40px}
+.embed .pane-grip{display:none}
+.mc-grid.mc-on>.chart-area{overflow:hidden}
+.mc-grid.mc-on>.chart-area .main-pane{flex:1.4 1 0;min-height:120px}
+.mc-grid.mc-on>.chart-area .panes{flex:1 1 0;min-height:0}
+.mc-grid.mc-on>.chart-area .panes:empty{display:none}
+.mc-grid.mc-on>.chart-area .sub-pane{flex:1 1 0;height:auto!important;min-height:40px}
+.mc-grid.mc-on>.chart-area .pane-grip{display:none}
+/* 업비트 테더 환산 계산기 */
+.calc-body{padding:2px 12px 10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
+.calc-body .fld{gap:3px}
+.calc-row{display:flex;gap:6px}
+.calc-row .field{flex:1;min-width:0}
+.calc-row .btn-ghost{height:32px;padding:0 10px;font-size:12px;white-space:nowrap;flex:none}
+.calc-body .field.num{font-family:var(--mono);text-align:right;font-size:13px}
+.calc-src{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
+.calc-x{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px}
+.calc-x .field.num{font-size:15px;font-weight:600;height:36px}
+.calc-eq{align-self:center;color:var(--muted);font-size:14px;line-height:1}
+.calc-note{font-size:11px;color:var(--muted);margin:0}
+.calc-note:empty{display:none}
+/* 스토캐스틱 3중: 칸별 이름표와 값 */
+.band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
+.band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
+.band-legend b{font-weight:500;font-variant-numeric:tabular-nums}
+</style>
+<div class="app">
+  <header class="topbar">
+    <button type="button" class="sym-btn" id="symBtn" title="심볼 검색 — 차트에서 아무 글자나 쳐도 열려요">
+      <span class="coin" id="symCoin">B</span>
+      <span id="symText">BTCUSDT</span><span class="ex-badge" id="exBadge" data-ex="binance">바이낸스 현물</span>
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+    </button>
+    <span class="vsep"></span>
+    <div class="ivs" id="ivs" role="group" aria-label="시간 단위"></div>
+    <button type="button" class="iv-drop" id="ivDrop" data-pop="ivPop" aria-haspopup="true" aria-expanded="false" title="시간 단위 더보기·직접 추가 (차트에서 숫자를 쳐도 돼요)">
+      <span id="ivDropLabel"></span>
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+    </button>
+    <span class="vsep"></span>
+    <button type="button" class="tb-btn" id="typeBtn" data-pop="typePop" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 2.5v3M5 12.5v3M13 2.5v2M13 13.5v2"/><rect x="3" y="5.5" width="4" height="7" rx=".6"/><rect x="11" y="4.5" width="4" height="9" rx=".6" fill="currentColor"/></svg>
+      <span id="typeLabel">캔들</span>
+    </button>
+    <button type="button" class="tb-btn" id="indBtn" title="지표 추가 (/)">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13c2.5 0 3-8 6-8s3 6 5.5 6S15.5 7 16 6"/></svg>
+      <span>지표</span>
+    </button>
+    <button type="button" class="tb-btn" id="cmpBtn" title="다른 종목과 비교 — 다른 거래소 종목도 돼요 (퍼센트로 겹쳐 그림)">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13l4-4 3 2 6-6"/><path d="M2 15.5h14M11 5h4v4" opacity=".55"/></svg>
+      <span>비교</span>
+    </button>
+    <span class="grow"></span>
+    <button type="button" class="conn" id="conn" data-state="connecting" data-pop="latPop" aria-haspopup="true" aria-expanded="false" title="연결 상태와 지연 시간">
+      <i></i><span class="conn-text">연결 중…</span><span class="conn-lat" id="connLat"></span>
+    </button>
+    <button type="button" class="tz-btn" id="tzBtn" data-pop="tzPop" aria-haspopup="true" aria-expanded="false" title="시계 · 시간 단위별 봉 마감 시간 · 시간대 (UTC 등)"><span id="tzClock" class="num"></span><span id="tzLbl"></span></button>
+    <button type="button" class="icon-btn" id="alertBtn" aria-label="알림" title="알림 — 가격·지표·작도 선을 지나가면 알려 줘요 (Alt+A)"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5V8a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5H3z"/><path d="M7.5 15.5a1.5 1.5 0 0 0 3 0"/></svg><span class="al-badge" id="alertBadge" hidden></span></button>
+    <button type="button" class="icon-btn" id="layoutBtn" data-pop="layoutPop" aria-haspopup="true" aria-expanded="false" aria-pressed="false" aria-label="차트 배치 (멀티 차트)" title="차트 배치 — 1~4칸 멀티 차트"></button>
+    <button type="button" class="icon-btn" id="chartSetBtn" aria-label="차트 설정" title="차트 설정 — 캔들 색, 봉 마감 시간, 거래량 프로파일, 가격 축, 시간대"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h7M13 5h2M3 13h2M8 13h7"/><circle cx="11.5" cy="5" r="1.6"/><circle cx="6.5" cy="13" r="1.6"/><path d="M3 9h3M9 9h6"/><circle cx="7.5" cy="9" r="1.6"/></svg></button>
+    <button type="button" class="icon-btn" id="fsBtn" aria-label="전체 화면" title="전체 화면"></button>
+    <button type="button" class="icon-btn" id="syncBtn" aria-label="다른 기기로 설정 옮기기" title="다른 기기로 설정 옮기기 (휴대폰 등)"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3" width="9" height="7" rx="1"/><path d="M4 13h4"/><rect x="12" y="5" width="4.5" height="9" rx="1"/><path d="M7 6.5h6M11.5 5l1.5 1.5-1.5 1.5"/></svg></button>
+    <button type="button" class="icon-btn" id="themeBtn" aria-label="밝은 테마로 전환" title="테마 전환"></button>
+  </header>
+
+  <nav class="tools" id="tools" aria-label="작도 도구"></nav>
+
+  <div class="mc-grid" id="mcGrid">
+  <main class="chart-area">
+    <div class="pane main-pane" id="mainPane" data-pane="main">
+      <div class="chart" id="mainChart"></div>
+      <div class="legend" id="legend">
+        <div class="lg-title"><span id="lgSym">BTC/USDT</span><span class="lg-sep">·</span><span id="lgIv">1분</span><span class="lg-sep">·</span><span id="lgEx">바이낸스</span><button type="button" class="lg-toggle" id="lgToggle" aria-expanded="true" hidden>지표 접기</button></div>
+        <div class="lg-vals" id="lgVals">
+          <span>시 <b id="lgO"></b></span><span>고 <b id="lgH"></b></span><span>저 <b id="lgL"></b></span><span>종 <b id="lgC"></b></span><span><b id="lgChg"></b></span>
+        </div>
+        <div class="lg-cmp" id="lgCmp" hidden></div>
+        <div class="lg-inds" id="lgInds"></div>
+      </div>
+      <div class="draw-hint" id="drawHint" hidden></div>
+      <div class="rp-bar" id="rpBar" hidden role="toolbar" aria-label="바 리플레이"></div>
+      <button type="button" class="pz-auto" id="pzAuto" hidden title="가격 축을 자동 맞춤으로 (가격 축 더블클릭)">자동 맞춤</button>
+      <div class="dw-bar" id="dwBar" hidden role="toolbar" aria-label="선택한 도형"></div>
+      <form class="dw-text" id="dwText" hidden>
+        <input class="field" id="dwTextIn" type="text" maxlength="120" placeholder="메모 입력" aria-label="텍스트 내용" autocomplete="off">
+        <button type="submit" class="btn-primary">확인</button>
+      </form>
+      <div class="iv-quick" id="ivQuick" hidden>
+        <label for="ivQuickIn">시간 단위 바꾸기</label>
+        <input id="ivQuickIn" type="text" autocomplete="off" spellcheck="false">
+        <span class="hint" id="ivQuickHint">숫자만 쓰면 분 단위 · 예: 10, 45분, 4h, 2일, 3개월 · Enter</span>
+      </div>
+      <button type="button" class="to-rt" id="toRT" hidden aria-label="최신 봉으로 이동" title="최신 봉으로 이동">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4l4 4-4 4M9 4l4 4-4 4"/></svg>
+      </button>
+      <div class="overlay" id="overlay"><div class="spinner" id="spinner"></div><p id="overlayMsg">차트 불러오는 중…</p><button type="button" class="btn-primary" id="retryBtn" hidden>다시 시도</button></div>
+    </div>
+    <div class="panes" id="panes"></div>
+  </main>
+  </div>
+
+  <aside class="side" aria-label="시세 정보">
+    <section class="summary">
+      <div class="sum-top">
+        <span class="coin lg" id="sumCoin">B</span>
+        <div><div class="sum-sym" id="sumSym">BTC<small>/USDT</small></div><div class="sum-sub" id="sumSub">바이낸스 현물</div></div>
+      </div>
+      <div class="sum-price"><span class="num" id="sumLast">—</span><span class="sum-chg num" id="sumChg"></span></div>
+      <dl class="sum-grid">
+        <div><dt>24h 고가</dt><dd class="num" id="sumHigh">—</dd></div>
+        <div><dt>24h 저가</dt><dd class="num" id="sumLow">—</dd></div>
+        <div><dt id="sumVolL">24h 거래량</dt><dd class="num" id="sumVol">—</dd></div>
+        <div><dt id="sumQvL">24h 거래대금</dt><dd class="num" id="sumQv">—</dd></div>
+      </dl>
+    </section>
+    <section class="watch">
+      <div class="sec-head"><h2>관심 종목</h2>
+        <button type="button" class="icon-btn sm" id="addWatch" aria-label="관심 종목 추가" title="관심 종목 추가">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+        </button>
+      </div>
+      <div class="cols"><span>종목</span><span>현재가</span><span>24h</span></div>
+      <ul class="w-list" id="watchList"></ul>
+    </section>
+    <section class="tape">
+      <div class="tabs" role="tablist" aria-label="체결과 호가">
+        <button type="button" role="tab" id="tabTrades" data-tab="trades" aria-controls="panelTrades" aria-selected="true">체결</button>
+        <button type="button" role="tab" id="tabBook" data-tab="book" aria-controls="panelBook" aria-selected="false">호가</button>
+        <button type="button" role="tab" id="tabSig" data-tab="sig" aria-controls="panelSig" aria-selected="false">신호</button>
+        <button type="button" role="tab" id="tabCalc" data-tab="calc" aria-controls="panelCalc" aria-selected="false" title="업비트 테더 시세로 원화 환산">계산기</button>
+      </div>
+      <div class="tab-panel" id="panelTrades" role="tabpanel" aria-labelledby="tabTrades">
+        <div class="cols t-cols"><span id="tcP">가격</span><span id="tcQ">수량</span><span>시간</span></div>
+        <div class="t-list" id="tradeList"></div>
+      </div>
+      <div class="tab-panel" id="panelBook" role="tabpanel" aria-labelledby="tabBook" hidden>
+        <div class="cols t-cols"><span id="bcP">가격</span><span id="bcQ">수량</span><span id="bcT">합계</span></div>
+        <div class="ob-list" id="bookList"></div>
+      </div>
+      <div class="tab-panel" id="panelSig" role="tabpanel" aria-labelledby="tabSig" hidden>
+        <div class="sg-head">
+          <span class="sg-meta" id="sgMeta">계산 전</span>
+          <label class="sg-sw"><input type="checkbox" id="sgAlarm"> 알림</label>
+        </div>
+        <div class="sg-body" id="sgBody"></div>
+      </div>
+      <div class="tab-panel" id="panelCalc" role="tabpanel" aria-labelledby="tabCalc" hidden>
+        <div class="calc-body">
+          <div class="fld" title="계산기를 열어 둔 동안 5초마다 업비트 시세로 바뀌어요"><span>업비트 테더 시세 (원 / USDT) <em class="calc-src" id="cSrc"></em></span>
+            <input class="field num" id="cRate" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,400" aria-label="업비트 테더 시세">
+          </div>
+          <div class="calc-x">
+            <label class="fld"><span>테더 (USDT)</span><input class="field num" id="cUsdt" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,000"></label>
+            <span class="calc-eq" aria-hidden="true">⇄</span>
+            <label class="fld"><span>원화 (원)</span><input class="field num" id="cKrw" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,400,000"></label>
+          </div>
+          <p class="calc-note">어느 칸에 넣든 다른 칸이 업비트 테더 시세로 바로 계산돼요.</p>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<div class="pop" id="typePop" role="menu" aria-label="차트 유형" hidden></div>
+<div class="pop iv-pop" id="ivPop" aria-label="시간 단위" hidden></div>
+<div class="pop tool-pop" id="toolPop" role="menu" aria-label="작도 도구 목록" hidden></div>
+<div class="pop lat-pop" id="latPop" aria-label="지연 시간" hidden></div>
+<div class="pop move-pop" id="movePop" role="menu" aria-label="지표 위치 옮기기" hidden></div>
+<div class="pop tz-pop" id="tzPop" role="menu" aria-label="시간대" hidden></div>
+<div class="pop layout-pop" id="layoutPop" aria-label="차트 배치" hidden></div>
+<div class="pop goto-pop" id="gotoPop" aria-label="날짜로 이동" hidden>
+  <div class="pop-title">날짜로 이동 · <span id="gotoTz"></span></div>
+  <form class="goto-form" id="gotoForm"><input type="datetime-local" class="field" id="gotoIn" required aria-label="이동할 날짜와 시간"><button type="submit" class="btn-primary">이동</button></form>
+  <p class="pop-hint">지금 받아 둔 것보다 예전이면 거래소에서 더 받아 와요. 봉 2만 개까지 (1분봉은 약 2주).</p>
+</div>
+<div class="drag-ghost" id="dragGhost" hidden></div>
+<div class="drop-mark" id="dropMark" hidden></div>
+
+<div class="modal" id="search" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+    <div class="modal-head">
+      <h2 id="searchTitle">종목 검색</h2>
+      <button type="button" class="icon-btn" data-close="search" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="vtabs" id="vtabs"></div>
+    <div class="search-box">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M12 12l3.5 3.5"/></svg>
+      <input class="upper" id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="BTC, ETHUSDT, SOL…" aria-label="심볼 검색" role="combobox" aria-controls="searchList" aria-expanded="true" aria-autocomplete="list">
+    </div>
+    <div class="qtabs" id="qtabs" role="group" aria-label="견적 통화"></div>
+    <ul class="s-list" id="searchList" role="listbox" aria-label="검색 결과"></ul>
+    <div class="modal-foot">↑↓ 이동 · Enter 선택 · Esc 닫기</div>
+  </div>
+</div>
+
+<div class="modal" id="indDlg" hidden>
+  <div class="modal-card ind-card" role="dialog" aria-modal="true" aria-labelledby="indTitle">
+    <div class="modal-head">
+      <h2 id="indTitle">지표</h2>
+      <button type="button" class="icon-btn" data-close="indDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <section class="ma-quick" aria-label="이평선 빠르게 추가">
+      <div class="mq-row">
+        <span class="mq-title">이평선 추가</span>
+        <select class="field" id="mqKind" aria-label="이동평균 종류"></select>
+        <input class="field num-in" id="mqLen" type="number" min="1" max="2000" value="20" aria-label="기간">
+        <select class="field" id="mqSrc" aria-label="기준 가격"></select>
+        <button type="button" class="btn-primary" id="mqAdd">추가</button>
+      </div>
+      <div class="chips" id="mqChips"><span>바로 추가</span></div>
+    </section>
+    <div class="search-box">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M12 12l3.5 3.5"/></svg>
+      <input id="indSearch" type="text" autocomplete="off" spellcheck="false" placeholder="지표 검색 — RSI, 일목, 볼린저, OBV…" aria-label="지표 검색">
+    </div>
+    <div class="ind-body">
+      <nav class="ind-cats" id="indCats" aria-label="지표 분류"></nav>
+      <ul class="ind-list" id="indList"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal top" id="setDlg" hidden>
+  <div class="modal-card set-card" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="modal-head">
+      <h2 id="setTitle">설정</h2>
+      <button type="button" class="icon-btn" data-close="setDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <form class="set-form" id="setForm"></form>
+    <div class="modal-actions"><button type="button" class="btn-ghost" id="setReset">기본값으로</button><button type="button" class="btn-primary" data-close="setDlg">완료</button></div>
+  </div>
+</div>
+<div class="modal top" id="alertDlg" hidden>
+  <div class="modal-card al-card" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+    <div class="modal-head">
+      <h2 id="alertTitle">알림</h2>
+      <button type="button" class="icon-btn" data-close="alertDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="al-body" id="alertBody"></div>
+  </div>
+</div>
+<div class="modal top" id="chartDlg" hidden>
+  <div class="modal-card cs-card" role="dialog" aria-modal="true" aria-labelledby="chartTitle">
+    <div class="modal-head">
+      <h2 id="chartTitle">차트 설정</h2>
+      <button type="button" class="icon-btn" data-close="chartDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="cs-body" id="chartBody"></div>
+  </div>
+</div>
+<div class="modal top" id="syncDlg" hidden>
+  <div class="modal-card sync-card" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+    <div class="modal-head">
+      <h2 id="syncTitle">다른 기기로 설정 옮기기</h2>
+      <button type="button" class="icon-btn" data-close="syncDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="sync-body" id="syncBody"></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+if (!window.LightweightCharts) document.write('<script crossorigin="anonymous" src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"><\/script>');
+</script>
