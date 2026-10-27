@@ -545,12 +545,9 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 .calc-row .btn-ghost{height:32px;padding:0 10px;font-size:12px;white-space:nowrap;flex:none}
 .calc-body .field.num{font-family:var(--mono);text-align:right;font-size:13px}
 .calc-src{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
-.calc-out{margin:0;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px}
-.calc-out>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.calc-out>div[hidden]{display:none}
-.calc-out dt{font-size:12px;color:var(--muted)}
-.calc-out dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px;text-align:right}
-.calc-out .big dd{font-size:18px;font-weight:600}
+.calc-x{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px}
+.calc-x .field.num{font-size:15px;font-weight:600;height:36px}
+.calc-eq{align-self:center;color:var(--muted);font-size:14px;line-height:1}
 .calc-note{font-size:11px;color:var(--muted);margin:0}
 .calc-note:empty{display:none}
 /* 스토캐스틱 3중: 칸별 이름표와 값 */
@@ -676,14 +673,12 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
             <div class="calc-row"><input class="field num" id="cRate" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,400" aria-label="업비트 테더 시세"><button type="button" class="btn-ghost" id="cFetch">업비트에서 불러오기</button></div>
           </div>
           <label class="cs-chk calc-auto" title="계산기를 열어 둔 동안 5초마다 업비트 시세로 맞춰요"><input type="checkbox" id="cAuto"><span>업비트 시세 자동으로 맞추기 (5초마다)</span></label>
-          <label class="fld"><span>보유 테더 (USDT)</span><input class="field num" id="cUsdt" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,000"></label>
-          <dl class="calc-out">
-            <div class="big"><dt>보유 테더 원화 환산</dt><dd id="cKrw">—</dd></div>
-            <div><dt id="cSymL">1개 원화 환산가</dt><dd id="cSymKrw">—</dd></div>
-            <div><dt id="cQtyL">보유 테더로 살 수 있는 수량</dt><dd id="cQty">—</dd></div>
-            <div id="cUpWrap" hidden title="업비트 원화 가격이 테더 환산가보다 얼마나 비싼지(+) 싼지(-)"><dt>업비트 원화가 (차이)</dt><dd id="cUp">—</dd></div>
-          </dl>
-          <p class="calc-note" id="cNote"></p>
+          <div class="calc-x">
+            <label class="fld"><span>테더 (USDT)</span><input class="field num" id="cUsdt" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,000"></label>
+            <span class="calc-eq" aria-hidden="true">⇄</span>
+            <label class="fld"><span>원화 (원)</span><input class="field num" id="cKrw" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,400,000"></label>
+          </div>
+          <p class="calc-note">어느 칸에 넣든 다른 칸이 업비트 테더 시세로 바로 계산돼요.</p>
         </div>
       </div>
     </section>
@@ -1450,7 +1445,7 @@ const SID_RE = /^(binance|bitget|okx):(spot|perp):[A-Za-z0-9._-]{2,40}$/;
 const EXTRA_WATCH = ['binance:perp:BTCUSDT', 'bitget:perp:BTCUSDT', 'okx:perp:BTC-USDT-SWAP'];
 const DEFAULTS = {
   sym: 'binance:spot:BTCUSDT', interval: '1m', type: 'candle', scale: 'n', invert: false, theme: 'dark', tab: 'trades',
-  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], calc: { rate: null, usdt: null, auto: false }, alerts: [], layout: { n: '1', syncSym: false, syncIv: false, syncX: true },
+  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], calc: { rate: null, usdt: null, krw: null, last: 'usdt', auto: false }, alerts: [], layout: { n: '1', syncSym: false, syncIv: false, syncX: true },
   watch: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'TRXUSDT', 'LINKUSDT', 'AVAXUSDT'].map(s => 'binance:spot:' + s).concat(EXTRA_WATCH),
   favIv: DEFAULT_FAV, customIv: [], magnet: false, keepTool: false, hideDw: false, toolPick: {},
   v: 2, panes: [], paneH: {},
@@ -1516,7 +1511,8 @@ const prefs = (() => {
   p.alerts = (Array.isArray(p.alerts) ? p.alerts : []).filter(a => a && str(a.id) && SID_RE.test(a.sid || '') && ['up', 'down', 'cross'].includes(a.cond)
     && (a.kind === 'price' ? fin(a.price) : a.kind === 'ind' ? a.ind && str(a.ind.uid) && str(a.ind.k) && str(a.iv) && (a.tk ? str(a.tk) : fin(a.tv)) : a.kind === 'draw' ? a.dw && str(a.dw.id) && str(a.dw.key) : false)).slice(0, 50);
   const cc = p.calc && typeof p.calc === 'object' ? p.calc : {};
-  p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: fin(cc.usdt) && cc.usdt > 0 ? cc.usdt : null, auto: !!cc.auto };
+  const pos = v => fin(v) && v >= 0 ? v : null;
+  p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: pos(cc.usdt), krw: pos(cc.krw), last: cc.last === 'krw' ? 'krw' : 'usdt', auto: !!cc.auto };
   if (!p.layout || typeof p.layout !== 'object') p.layout = {};
   p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false };
   for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
@@ -4619,56 +4615,35 @@ if (!EMBED) {
   mcApply();
 }
 
-// ───────── 업비트 테더 환산 계산기 (체결·호가 옆 탭) ─────────
-// 업비트 테더 시세(원/USDT)와 보유 테더를 넣으면 원화로 환산한다. 지금 보는 종목 가격도 같은 시세로 원화 환산.
-// 업비트 공개 시세 API(api.upbit.com, 키 필요 없음)로 테더 시세를 불러오거나 5초마다 자동으로 맞출 수 있다.
-const UPBIT = 'https://api.upbit.com/v1/ticker?markets=';
-const CALC = { up: null, upAt: 0, upBase: null, busy: false, timer: null };
-const numIn = s => { const v = parseFloat(String(s || '').replace(/[,\s원₩]/g, '')); return isFinite(v) && v > 0 ? v : null; };
-const fmtIn = v => v == null ? '' : v.toLocaleString('en-US', { maximumFractionDigits: 8 });
-const fmtKrw = v => !isN(v) ? '—' : '₩' + v.toLocaleString('ko-KR', { maximumFractionDigits: Math.abs(v) >= 1000 ? 0 : Math.abs(v) >= 1 ? 2 : 4 });
-function calcPrice() { // 지금 종목 가격 (테더 같은 달러 스테이블코인 기준일 때만)
-  if (!cur || !STABLE.has(cur.quote)) return null;
-  const p = S.lastPrice != null ? S.lastPrice : S.bars.length ? S.bars[S.bars.length - 1].close : null;
-  return isN(p) ? p : null;
+// ───────── 테더 ↔ 원화 계산기 (체결·호가 옆 탭) ─────────
+// 업비트 테더 시세(원/USDT)를 기준으로 테더와 원화를 서로 환산한다. 어느 칸에 넣든 다른 칸이 바로 바뀐다.
+// 시세는 직접 넣거나 업비트 공개 시세 API(api.upbit.com, 키 필요 없음)로 불러오고, 5초마다 자동으로 맞출 수도 있다.
+const UPBIT_USDT = 'https://api.upbit.com/v1/ticker?markets=KRW-USDT';
+const CALC = { busy: false, timer: null };
+const numIn = s => { const v = parseFloat(String(s || '').replace(/[,\s원₩]/g, '')); return isFinite(v) && v >= 0 ? v : null; };
+const fmtIn = (v, d = 8) => v == null ? '' : v.toLocaleString('en-US', { maximumFractionDigits: d });
+function calcRender(skip) { // 마지막에 넣은 칸을 기준으로 다른 칸을 계산 (skip: 지금 입력 중인 칸은 건드리지 않음)
+  const c = prefs.calc, r = c.rate;
+  if (r) { if (c.last === 'krw') c.usdt = c.krw == null ? null : +(c.krw / r).toFixed(2); else c.krw = c.usdt == null ? null : Math.round(c.usdt * r); }
+  if (skip !== 'cRate' && document.activeElement !== $('#cRate')) $('#cRate').value = fmtIn(r, 2);
+  if (skip !== 'cUsdt') $('#cUsdt').value = fmtIn(c.usdt, 6);
+  if (skip !== 'cKrw') $('#cKrw').value = fmtIn(c.krw, 0);
 }
-function calcRender() {
-  if (prefs.tab !== 'calc' || !cur) return;
-  const c = prefs.calc, rate = c.rate, usdt = c.usdt, p = calcPrice(), base = cur.base;
-  if (CALC.upBase && CALC.upBase !== base && !CALC.busy) calcFetch(true);
-  $('#cKrw').textContent = rate && usdt ? fmtKrw(usdt * rate) : '—';
-  $('#cSymL').textContent = `${base} 1개 원화 환산가`;
-  $('#cQtyL').textContent = `보유 테더로 살 수 있는 ${base}`;
-  $('#cSymKrw').textContent = rate && p ? fmtKrw(p * rate) : '—';
-  $('#cQty').textContent = usdt && p ? `${fmt(usdt / p, Math.min(8, Math.max(S.qtyPrec, 4)))} ${base}` : '—';
-  const up = CALC.up && CALC.upBase === base ? CALC.up : null, wrap = $('#cUpWrap');
-  wrap.hidden = !up;
-  if (up && rate && p) {
-    const d = (up / (p * rate) - 1) * 100;
-    $('#cUp').innerHTML = `${fmtKrw(up)} <span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d.toFixed(2)}%</span>`;
-  }
-  $('#cNote').textContent = !STABLE.has(cur.quote) ? `${cur.title}은(는) ${cur.quote} 가격이라 종목 환산은 테더 가격 종목에서만 돼요.` : '';
-}
-async function calcFetch(quiet) { // 업비트에서 테더 시세(와 같은 코인 원화 가격) 불러오기
-  if (CALC.busy || !cur) return;
+async function calcFetch(quiet) { // 업비트에서 테더 시세 불러오기
+  if (CALC.busy) return;
   CALC.busy = true;
-  const base = cur.base;
-  if (CALC.upBase !== base) { CALC.up = null; CALC.upBase = base; } // 종목이 바뀌면 그 코인의 업비트 가격을 다시
-  const mk = /^[A-Z0-9]{1,15}$/.test(base) && base !== 'USDT' ? `,KRW-${base}` : '';
   try {
-    let r = await fetch(UPBIT + 'KRW-USDT' + mk, { cache: 'no-store' });
-    if (!r.ok && mk) r = await fetch(UPBIT + 'KRW-USDT', { cache: 'no-store' }); // 업비트에 그 코인 원화 마켓이 없으면 테더만
+    const r = await fetch(UPBIT_USDT, { cache: 'no-store' });
     if (!r.ok) throw new Error('업비트 응답 ' + r.status);
-    const list = await r.json(), t = list.find(x => x.market === 'KRW-USDT'), coin = mk && list.find(x => x.market === `KRW-${base}`);
+    const t = (await r.json()).find(x => x.market === 'KRW-USDT');
     if (!t || !isN(t.trade_price)) throw new Error('테더 시세가 없어요');
     prefs.calc.rate = t.trade_price; savePrefs();
-    CALC.up = coin && isN(coin.trade_price) ? coin.trade_price : null; CALC.upBase = base; CALC.upAt = Date.now();
-    if (document.activeElement !== $('#cRate')) $('#cRate').value = fmtIn(t.trade_price);
     $('#cSrc').textContent = `업비트 ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} 기준`;
-    if (!quiet) toast(`업비트 테더 시세 ${fmtKrw(t.trade_price)}을 넣었어요.`);
+    calcRender(document.activeElement && document.activeElement.id);
+    if (!quiet) toast(`업비트 테더 시세 ₩${fmtIn(t.trade_price, 2)}을 넣었어요.`);
   } catch (e) {
     if (!quiet) toast('업비트 시세를 불러오지 못했어요. 직접 입력하세요.', 'err');
-  } finally { CALC.busy = false; calcRender(); }
+  } finally { CALC.busy = false; }
 }
 function calcAuto() {
   clearInterval(CALC.timer); CALC.timer = null;
@@ -4677,18 +4652,21 @@ function calcAuto() {
   CALC.timer = setInterval(() => { if (prefs.tab === 'calc' && !document.hidden) calcFetch(true); }, 5000);
 }
 function calcShow() { // 계산기 탭을 열 때
-  $('#cRate').value = fmtIn(prefs.calc.rate); $('#cUsdt').value = fmtIn(prefs.calc.usdt); $('#cAuto').checked = prefs.calc.auto;
-  if (prefs.calc.auto || CALC.upBase !== (cur && cur.base)) calcFetch(true);
+  $('#cAuto').checked = prefs.calc.auto;
   calcRender();
+  if (prefs.calc.auto) calcFetch(true);
 }
 $('#panelCalc').addEventListener('input', e => {
-  const id = e.target.id;
-  if (id === 'cRate' || id === 'cUsdt') { prefs.calc[id === 'cRate' ? 'rate' : 'usdt'] = numIn(e.target.value); if (id === 'cRate') $('#cSrc').textContent = '직접 입력'; savePrefs(); calcRender(); }
+  const id = e.target.id, v = numIn(e.target.value), c = prefs.calc;
+  if (id === 'cRate') { c.rate = v || null; $('#cSrc').textContent = '직접 입력'; }
+  else if (id === 'cUsdt') { c.usdt = v; c.last = 'usdt'; }
+  else if (id === 'cKrw') { c.krw = v; c.last = 'krw'; }
+  else return;
+  calcRender(id); savePrefs();
 });
-$('#panelCalc').addEventListener('focusout', e => { if (e.target.id === 'cRate' || e.target.id === 'cUsdt') e.target.value = fmtIn(numIn(e.target.value)); }); // 칸을 벗어나면 천 단위 쉼표
+$('#panelCalc').addEventListener('focusout', e => { if (['cRate', 'cUsdt', 'cKrw'].includes(e.target.id)) calcRender(); }); // 칸을 벗어나면 천 단위 쉼표
 $('#panelCalc').addEventListener('change', e => { if (e.target.id === 'cAuto') { prefs.calc.auto = e.target.checked; savePrefs(); calcAuto(); } });
 $('#cFetch').addEventListener('click', () => calcFetch(false));
-setInterval(calcRender, 500); // 가격이 바뀌면 환산도 따라 바뀐다 (계산기 탭이 열려 있을 때만 그림)
 if (!EMBED) calcAuto();
 
 // ───────── 팝오버 ─────────
