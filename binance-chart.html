@@ -539,7 +539,6 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 /* 업비트 테더 환산 계산기 */
 .calc-body{padding:2px 12px 10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
 .calc-body .fld{gap:3px}
-.calc-auto{font-size:12px}
 .calc-row{display:flex;gap:6px}
 .calc-row .field{flex:1;min-width:0}
 .calc-row .btn-ghost{height:32px;padding:0 10px;font-size:12px;white-space:nowrap;flex:none}
@@ -669,10 +668,9 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
       </div>
       <div class="tab-panel" id="panelCalc" role="tabpanel" aria-labelledby="tabCalc" hidden>
         <div class="calc-body">
-          <div class="fld"><span>업비트 테더 시세 (원 / USDT) <em class="calc-src" id="cSrc"></em></span>
+          <div class="fld" title="계산기를 열어 둔 동안 5초마다 업비트 시세로 바뀌어요"><span>업비트 테더 시세 (원 / USDT) <em class="calc-src" id="cSrc"></em></span>
             <div class="calc-row"><input class="field num" id="cRate" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,400" aria-label="업비트 테더 시세"><button type="button" class="btn-ghost" id="cFetch">업비트에서 불러오기</button></div>
           </div>
-          <label class="cs-chk calc-auto" title="계산기를 열어 둔 동안 5초마다 업비트 시세로 맞춰요"><input type="checkbox" id="cAuto"><span>업비트 시세 자동으로 맞추기 (5초마다)</span></label>
           <div class="calc-x">
             <label class="fld"><span>테더 (USDT)</span><input class="field num" id="cUsdt" type="text" inputmode="decimal" autocomplete="off" placeholder="예: 1,000"></label>
             <span class="calc-eq" aria-hidden="true">⇄</span>
@@ -1445,7 +1443,7 @@ const SID_RE = /^(binance|bitget|okx):(spot|perp):[A-Za-z0-9._-]{2,40}$/;
 const EXTRA_WATCH = ['binance:perp:BTCUSDT', 'bitget:perp:BTCUSDT', 'okx:perp:BTC-USDT-SWAP'];
 const DEFAULTS = {
   sym: 'binance:spot:BTCUSDT', interval: '1m', type: 'candle', scale: 'n', invert: false, theme: 'dark', tab: 'trades',
-  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], calc: { rate: null, usdt: null, krw: null, last: 'usdt', auto: false }, alerts: [], layout: { n: '1', syncSym: false, syncIv: false, syncX: true },
+  tz: 'local', cd: true, pline: true, hilo: false, bidask: false, seps: false, vp: false, grid: true, wmOn: true, cross: 'normal', upC: null, dnC: null, cmp: [], calc: { rate: null, usdt: null, krw: null, last: 'usdt' }, alerts: [], layout: { n: '1', syncSym: false, syncIv: false, syncX: true },
   watch: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'TRXUSDT', 'LINKUSDT', 'AVAXUSDT'].map(s => 'binance:spot:' + s).concat(EXTRA_WATCH),
   favIv: DEFAULT_FAV, customIv: [], magnet: false, keepTool: false, hideDw: false, toolPick: {},
   v: 2, panes: [], paneH: {},
@@ -1512,7 +1510,7 @@ const prefs = (() => {
     && (a.kind === 'price' ? fin(a.price) : a.kind === 'ind' ? a.ind && str(a.ind.uid) && str(a.ind.k) && str(a.iv) && (a.tk ? str(a.tk) : fin(a.tv)) : a.kind === 'draw' ? a.dw && str(a.dw.id) && str(a.dw.key) : false)).slice(0, 50);
   const cc = p.calc && typeof p.calc === 'object' ? p.calc : {};
   const pos = v => fin(v) && v >= 0 ? v : null;
-  p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: pos(cc.usdt), krw: pos(cc.krw), last: cc.last === 'krw' ? 'krw' : 'usdt', auto: !!cc.auto };
+  p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: pos(cc.usdt), krw: pos(cc.krw), last: cc.last === 'krw' ? 'krw' : 'usdt' };
   if (!p.layout || typeof p.layout !== 'object') p.layout = {};
   p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false };
   for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
@@ -4617,9 +4615,9 @@ if (!EMBED) {
 
 // ───────── 테더 ↔ 원화 계산기 (체결·호가 옆 탭) ─────────
 // 업비트 테더 시세(원/USDT)를 기준으로 테더와 원화를 서로 환산한다. 어느 칸에 넣든 다른 칸이 바로 바뀐다.
-// 시세는 직접 넣거나 업비트 공개 시세 API(api.upbit.com, 키 필요 없음)로 불러오고, 5초마다 자동으로 맞출 수도 있다.
+// 시세는 계산기 탭을 연 동안 업비트 공개 시세 API(api.upbit.com, 키 필요 없음)에서 5초마다 불러온다. 직접 고치는 중에는 덮어쓰지 않는다.
 const UPBIT_USDT = 'https://api.upbit.com/v1/ticker?markets=KRW-USDT';
-const CALC = { busy: false, timer: null };
+const CALC = { busy: false };
 const numIn = s => { const v = parseFloat(String(s || '').replace(/[,\s원₩]/g, '')); return isFinite(v) && v >= 0 ? v : null; };
 const fmtIn = (v, d = 8) => v == null ? '' : v.toLocaleString('en-US', { maximumFractionDigits: d });
 function calcRender(skip) { // 마지막에 넣은 칸을 기준으로 다른 칸을 계산 (skip: 지금 입력 중인 칸은 건드리지 않음)
@@ -4630,7 +4628,7 @@ function calcRender(skip) { // 마지막에 넣은 칸을 기준으로 다른 �
   if (skip !== 'cKrw') $('#cKrw').value = fmtIn(c.krw, 0);
 }
 async function calcFetch(quiet) { // 업비트에서 테더 시세 불러오기
-  if (CALC.busy) return;
+  if (CALC.busy || (quiet && document.activeElement === $('#cRate'))) return;
   CALC.busy = true;
   try {
     const r = await fetch(UPBIT_USDT, { cache: 'no-store' });
@@ -4645,16 +4643,9 @@ async function calcFetch(quiet) { // 업비트에서 테더 시세 불러오기
     if (!quiet) toast('업비트 시세를 불러오지 못했어요. 직접 입력하세요.', 'err');
   } finally { CALC.busy = false; }
 }
-function calcAuto() {
-  clearInterval(CALC.timer); CALC.timer = null;
-  if (!prefs.calc.auto) return;
-  calcFetch(true);
-  CALC.timer = setInterval(() => { if (prefs.tab === 'calc' && !document.hidden) calcFetch(true); }, 5000);
-}
-function calcShow() { // 계산기 탭을 열 때
-  $('#cAuto').checked = prefs.calc.auto;
+function calcShow() { // 계산기 탭을 열 때 바로 한 번 불러온다
   calcRender();
-  if (prefs.calc.auto) calcFetch(true);
+  calcFetch(true);
 }
 $('#panelCalc').addEventListener('input', e => {
   const id = e.target.id, v = numIn(e.target.value), c = prefs.calc;
@@ -4665,9 +4656,8 @@ $('#panelCalc').addEventListener('input', e => {
   calcRender(id); savePrefs();
 });
 $('#panelCalc').addEventListener('focusout', e => { if (['cRate', 'cUsdt', 'cKrw'].includes(e.target.id)) calcRender(); }); // 칸을 벗어나면 천 단위 쉼표
-$('#panelCalc').addEventListener('change', e => { if (e.target.id === 'cAuto') { prefs.calc.auto = e.target.checked; savePrefs(); calcAuto(); } });
 $('#cFetch').addEventListener('click', () => calcFetch(false));
-if (!EMBED) calcAuto();
+if (!EMBED) setInterval(() => { if (prefs.tab === 'calc' && !document.hidden) calcFetch(true); }, 5000); // 계산기 탭을 연 동안 5초마다
 
 // ───────── 팝오버 ─────────
 function closePops() {
