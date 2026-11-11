@@ -50,3 +50,10 @@ function domRefresh() {
   if (!$('#domDlg').hidden) domMount($('#domBox'), $('#domBox').dataset.iv || spec.id);
 }
 $('#domBtn').addEventListener('click', openDom);
+// 종목 검색에서도 찾을 수 있게: USDT.D(점은 지워서 USDTD)·USDT·도미넌스·테더로 찾으면 맨 위에 한 줄 보이고, 고르면 위 창이 열린다
+const DOM_SID = 'tv:USDT.D';
+const domHit = q => !!q && (q.startsWith('USDTD') || (q.length >= 4 && 'USDTD'.startsWith(q)) || q.startsWith('DOMIN') || /도미|테더/.test(q));
+const domRow = sel => `<li role="option" id="so0" class="s-row${sel ? ' sel' : ''}" data-s="${DOM_SID}" aria-selected="${sel}">
+    <span class="coin" style="--h:160">T</span>
+    <span class="s-name"><span><b>USDT.D</b><small> 테더 도미넌스</small></span><span class="s-sub">TradingView · USDT 시가총액 ÷ 코인 전체 시가총액</span></span>
+    <span class="s-last muted">창으로 열기</span><span class="s-chg"></span></li>`;

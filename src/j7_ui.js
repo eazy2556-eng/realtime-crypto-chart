@@ -553,11 +553,15 @@ function renderSearch() {
   }
   scored.sort((a, b) => a[0] - b[0] || b[1].usd - a[1].usd);
   searchItems = scored.slice(0, 80).map(x => x[1]); searchSel = 0;
+  const dom = domHit(q);
+  if (dom && searchMode === 'open') searchItems.unshift({ sid: DOM_SID, dom: true }); // 테더 도미넌스 (거래소 종목이 아님)
   const inWatch = new Set(prefs.watch), V = VENUES[searchVk];
-  $('#searchList').innerHTML = searchItems.map((t, i) => `<li role="option" id="so${i}" class="s-row${i === 0 ? ' sel' : ''}" data-s="${esc(t.sid)}" aria-selected="${i === 0}">
+  const domNote = dom && searchMode !== 'open' ? '<li class="empty">테더 도미넌스(USDT.D)는 거래소 종목이 아니라서 관심 종목이나 비교에는 넣을 수 없어요. 위쪽 USDT.D 버튼으로 보세요.</li>' : '';
+  $('#searchList').innerHTML = domNote + searchItems.map((t, i) => t.dom ? domRow(i === 0) : `<li role="option" id="so${i}" class="s-row${i === 0 ? ' sel' : ''}" data-s="${esc(t.sid)}" aria-selected="${i === 0}">
     <span class="coin" style="--h:${hue(t.base)}">${esc(t.base.slice(0, 1))}</span>
     <span class="s-name"><span><b>${esc(t.base)}</b><small>/${esc(t.quote)}${V.mk === 'perp' ? ' 무기한' : ''}</small></span><span class="s-sub">${V.label}${searchMode === 'add' && inWatch.has(t.sid) ? ' · 관심 종목에 있음' : ''} · 거래대금 $${fvol(t.usd)}</span></span>
-    <span class="s-last num">${fmt(t.last, autoPrec(t.last))}</span><span class="s-chg num ${t.pct >= 0 ? 'up' : 'down'}">${fpct(t.pct)}</span></li>`).join('') || '<li class="empty">일치하는 종목이 없어요.</li>';
+    <span class="s-last num">${fmt(t.last, autoPrec(t.last))}</span><span class="s-chg num ${t.pct >= 0 ? 'up' : 'down'}">${fpct(t.pct)}</span></li>`).join('')
+    || (domNote ? '' : '<li class="empty">일치하는 종목이 없어요.</li>');
   $('#searchInput').setAttribute('aria-activedescendant', searchItems.length ? 'so0' : '');
   $('#searchList').scrollTop = 0;
 }
@@ -592,6 +596,7 @@ function closeSearch() {
 function choose(sid) {
   const mode = searchMode;
   closeSearch();
+  if (sid === DOM_SID) { openDom(); return; }
   const s = sidInfo(sid);
   if (!s) return;
   if (mode === 'cmp') return addCompare(sid);
