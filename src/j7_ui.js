@@ -632,7 +632,7 @@ $$('.modal').forEach(m => m.addEventListener('pointerdown', e => { if (e.target 
 $('#toRT').addEventListener('click', () => chart.timeScale().scrollToRealTime());
 $('#retryBtn').addEventListener('click', () => load(prefs.sym, prefs.interval));
 document.addEventListener('keydown', e => {
-  const open = ['setDlg', 'syncDlg', 'chartDlg', 'alertDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
+  const open = ['setDlg', 'syncDlg', 'chartDlg', 'alertDlg', 'indDlg', 'search', 'domDlg'].find(id => !$('#' + id).hidden);
   if (open) { if (e.key === 'Escape') { e.preventDefault(); closeModal(open); } return; }
   const t = e.target, typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   if (typing) return;

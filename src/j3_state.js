@@ -108,7 +108,7 @@ const prefs = (() => {
   const pos = v => fin(v) && v >= 0 ? v : null;
   p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: pos(cc.usdt), krw: pos(cc.krw), last: cc.last === 'krw' ? 'krw' : 'usdt' };
   if (!p.layout || typeof p.layout !== 'object') p.layout = {};
-  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false };
+  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false, dom: !!p.layout.dom };
   for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
   return p;
 })();

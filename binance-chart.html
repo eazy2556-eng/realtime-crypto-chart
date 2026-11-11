@@ -599,6 +599,18 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 .band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
 .band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
 .band-legend b{font-weight:500;font-variant-numeric:tabular-nums}
+/* 테더 도미넌스 (TradingView 위젯) — 큰 창과 멀티 차트 칸 */
+#domDlg{padding:4vh 16px 16px}
+.dom-card{width:min(1280px,100%);height:min(88vh,1000px);max-height:none}
+.dom-sub{font-size:12px;font-weight:400;color:var(--muted);margin-left:6px}
+.dom-box,.dom-cell{position:relative;flex:1 1 auto;min-height:0}
+.dom-box{border-top:1px solid var(--line)}
+.dom-load{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;color:var(--muted);font-size:13px}
+.dom-box .tradingview-widget-container,.dom-cell .tradingview-widget-container{position:absolute;inset:0;z-index:1}
+.tradingview-widget-container__widget{width:100%;height:100%}
+.modal-foot a{color:var(--accent)}
+.embed #domBtn{display:none}
+@media (max-width:640px){#domDlg{padding:0}#domDlg .dom-card{width:100%;height:100%;border:0;border-radius:0}.dom-sub{display:none}}
 </style>
 <div class="app">
   <header class="topbar">
@@ -625,6 +637,10 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
     <button type="button" class="tb-btn" id="cmpBtn" title="다른 종목과 비교 — 다른 거래소 종목도 돼요 (퍼센트로 겹쳐 그림)">
       <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13l4-4 3 2 6-6"/><path d="M2 15.5h14M11 5h4v4" opacity=".55"/></svg>
       <span>비교</span>
+    </button>
+    <button type="button" class="tb-btn" id="domBtn" title="테더 도미넌스 (USDT.D) — USDT 시가총액이 코인 전체 시가총액에서 차지하는 비율 · TradingView 차트">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 10A6.5 6.5 0 1 1 8 2.5"/><path d="M10.5 1.5a6 6 0 0 1 6 6h-6z"/></svg>
+      <span>USDT.D</span>
     </button>
     <span class="grow"></span>
     <button type="button" class="conn" id="conn" data-state="connecting" data-pop="latPop" aria-haspopup="true" aria-expanded="false" title="연결 상태와 지연 시간">
@@ -831,6 +847,16 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
       <button type="button" class="icon-btn" data-close="syncDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </div>
     <div class="sync-body" id="syncBody"></div>
+  </div>
+</div>
+<div class="modal top" id="domDlg" hidden>
+  <div class="modal-card dom-card" role="dialog" aria-modal="true" aria-labelledby="domTitle">
+    <div class="modal-head">
+      <h2 id="domTitle">테더 도미넌스 <small class="dom-sub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
+      <button type="button" class="icon-btn" data-close="domDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="dom-box" id="domBox"></div>
+    <div class="modal-foot">차트 제공 <a href="https://www.tradingview.com/" target="_blank" rel="noopener nofollow">TradingView</a> · 차트 왼쪽 위 기호를 바꾸면 BTC.D 같은 다른 도미넌스도 볼 수 있어요</div>
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -1566,7 +1592,7 @@ const prefs = (() => {
   const pos = v => fin(v) && v >= 0 ? v : null;
   p.calc = { rate: fin(cc.rate) && cc.rate > 0 ? cc.rate : null, usdt: pos(cc.usdt), krw: pos(cc.krw), last: cc.last === 'krw' ? 'krw' : 'usdt' };
   if (!p.layout || typeof p.layout !== 'object') p.layout = {};
-  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false };
+  p.layout = { n: ['1', '2v', '2h', '3', '4'].includes(p.layout.n) ? p.layout.n : '1', syncSym: !!p.layout.syncSym, syncIv: !!p.layout.syncIv, syncX: p.layout.syncX !== false, dom: !!p.layout.dom };
   for (const k of ['upC', 'dnC']) if (!/^#[0-9a-f]{6}$/i.test(p[k] || '')) p[k] = null;
   return p;
 })();
@@ -4537,6 +4563,58 @@ function addDrawAlert(d) { // 선택한 작도 선에 알림 걸기
   if (addAlert(a)) toast(`${DW_TOOLS[d.type].name}에 알림을 걸었어요. 가격이 선을 지나가면 알려 드려요 (봉마다 한 번). 상단 종 버튼에서 바꿀 수 있어요.`);
 }
 syncAlertBadge();
+// ───────── 테더 도미넌스 (USDT.D) ─────────
+// USDT 시가총액 ÷ 코인 전체 시가총액. 거래소가 주는 값이 아니고 무료 공개 API로는 과거 흐름을 받을 수 없어서
+// TradingView 무료 위젯(CRYPTOCAP:USDT.D)을 띄운다. 위쪽 USDT.D 버튼은 큰 창으로, 멀티 차트에서는 마지막 칸으로 띄울 수 있다.
+const TV_EMBED = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+const DOM_SYM = 'CRYPTOCAP:USDT.D';
+// 이 앱의 시간대는 고정 시차라서, 서머타임이 없는 도시를 골라 TradingView에 넘긴다
+const DOM_TZ = { utc: 'Etc/UTC', '+9': 'Asia/Seoul', '+8': 'Asia/Singapore', '+7': 'Asia/Bangkok', '+5.5': 'Asia/Kolkata', '+4': 'Asia/Dubai', '+3': 'Europe/Istanbul',
+  '+2': 'Africa/Johannesburg', '+1': 'Africa/Lagos', '-3': 'America/Sao_Paulo', '-4': 'America/Caracas', '-5': 'America/Bogota', '-6': 'America/El_Salvador',
+  '-7': 'America/Phoenix', '-8': 'America/Los_Angeles', '-10': 'Pacific/Honolulu' };
+const domTz = () => DOM_TZ[prefs.tz] || (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Etc/UTC'; } catch { return 'Etc/UTC'; } })();
+// TradingView 무료 위젯이 받는 시간 단위 중 지금 단위와 같거나 바로 아래 것
+function domIv(id) {
+  const sp = parseIv(id) || spec;
+  if (sp.unit === 'd') return 'D';
+  if (sp.unit === 'w') return 'W';
+  if (sp.unit === 'M') return 'M';
+  const min = sp.ms / 60000;
+  return String([1, 3, 5, 15, 30, 60, 120, 180, 240].filter(m => m <= min).pop() || 1);
+}
+const domSig = id => [prefs.theme, prefs.tz, prefs.grid, domIv(id)].join('|');
+// box 안에 위젯을 만든다. 테마·시간대·시간 단위가 그대로면 다시 만들지 않는다 (위젯 안에서 바꾼 것이 유지되게)
+function domMount(box, id) {
+  const sig = domSig(id);
+  if (box.dataset.sig === sig) return;
+  box.dataset.sig = sig; box.dataset.iv = id;
+  box.textContent = '';
+  const msg = document.createElement('p');
+  msg.className = 'dom-load'; msg.textContent = 'TradingView 차트 불러오는 중…';
+  const w = document.createElement('div'), inner = document.createElement('div'), s = document.createElement('script');
+  w.className = 'tradingview-widget-container';
+  inner.className = 'tradingview-widget-container__widget';
+  s.type = 'text/javascript'; s.src = TV_EMBED; s.async = true;
+  s.textContent = JSON.stringify({
+    autosize: true, symbol: DOM_SYM, interval: domIv(id), timezone: domTz(), theme: prefs.theme === 'light' ? 'light' : 'dark', style: '1', locale: 'kr',
+    backgroundColor: C.bg, gridColor: prefs.grid ? C.grid : 'rgba(0,0,0,0)', hide_volume: true, allow_symbol_change: true, save_image: false, calendar: false,
+    support_host: 'https://www.tradingview.com',
+  });
+  s.onerror = () => { msg.textContent = 'TradingView 차트를 불러오지 못했어요. 인터넷 연결을 확인하세요.'; box.dataset.sig = ''; };
+  w.append(inner, s);
+  box.append(msg, w);
+}
+function openDom() {
+  closePops();
+  $('#domDlg').hidden = false;
+  domMount($('#domBox'), spec.id);
+}
+// 테마·시간대가 바뀌면 열려 있는 위젯을 다시 만든다 (닫힌 창은 다음에 열 때)
+function domRefresh() {
+  for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, f.dataset.iv || spec.id);
+  if (!$('#domDlg').hidden) domMount($('#domBox'), $('#domBox').dataset.iv || spec.id);
+}
+$('#domBtn').addEventListener('click', openDom);
 
 // ───────── 멀티 차트 ─────────
 // 화면을 1~4칸으로 나눈다. 첫 칸은 이 페이지의 차트(오른쪽 시세 패널과 이어짐), 나머지 칸은 같은 앱을 작게 띄운 것.
@@ -4557,13 +4635,22 @@ function mcApply() {
   const L = prefs.layout, n = mcWide() ? MC_CELLS[L.n] || 1 : 1, g = $('#mcGrid');
   MC.wide = mcWide();
   g.className = 'mc-grid' + (n > 1 ? ` mc-on l-${L.n}` : '');
-  while (MC.frames.length > n - 1) MC.frames.pop().remove();
-  for (let k = MC.frames.length + 1; k < n; k++) {
-    const f = document.createElement('iframe');
-    f.className = 'mc-cell'; f.title = `차트 ${k + 1}`;
-    f.src = `${location.pathname}?embed=1&slot=${k}&v=${encodeURIComponent(document.lastModified)}`; // 새로 배포하면 칸도 새 파일을 받게
+  const kind = k => L.dom && k === n - 1 ? 'dom' : 'app'; // 테더 도미넌스를 켜면 마지막 칸은 TradingView USDT.D
+  let keep = 0;
+  while (keep < MC.frames.length && keep < n - 1 && MC.frames[keep].dataset.kind === kind(keep + 1)) keep++;
+  while (MC.frames.length > keep) MC.frames.pop().remove();
+  for (let k = keep + 1; k < n; k++) {
+    let f;
+    if (kind(k) === 'dom') { f = document.createElement('div'); f.className = 'mc-cell dom-cell'; }
+    else {
+      f = document.createElement('iframe');
+      f.className = 'mc-cell'; f.title = `차트 ${k + 1}`;
+      f.src = `${location.pathname}?embed=1&slot=${k}&v=${encodeURIComponent(document.lastModified)}`; // 새로 배포하면 칸도 새 파일을 받게
+    }
+    f.dataset.kind = kind(k);
     g.append(f); MC.frames.push(f);
   }
+  for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, f.dataset.iv || spec.id);
   $('#layoutBtn').setAttribute('aria-pressed', String(n > 1));
   $('#layoutBtn').innerHTML = mcIcon(n > 1 ? L.n : '1');
 }
@@ -4574,6 +4661,7 @@ function buildLayoutPop() {
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncSym"${L.syncSym ? ' checked' : ''}><span>모든 칸 같은 종목<small>한 칸에서 종목을 바꾸면 다른 칸도 바뀌어요</small></span></label>`
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncIv"${L.syncIv ? ' checked' : ''}><span>모든 칸 같은 시간 단위</span></label>`
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncX"${L.syncX ? ' checked' : ''}><span>십자선 맞추기<small>마우스를 올린 칸과 같은 시각에 다른 칸도 세로 점선을 그려요</small></span></label>`
+    + `<label class="cs-chk"><input type="checkbox" data-mcs="dom"${L.dom ? ' checked' : ''}><span>마지막 칸에 테더 도미넌스<small>TradingView USDT.D 차트를 띄워요. 2칸 이상일 때 보여요</small></span></label>`
     + `<p class="pop-hint">${mcWide() ? '칸마다 종목·시간 단위·지표·작도 도구를 따로 써요. 왼쪽 위 칸이 오른쪽 시세 패널과 이어져 있어요.' : '멀티 차트는 가로 900px 이상인 넓은 화면에서 보여요. (휴대폰은 한 칸)'}</p>`;
 }
 $('#layoutPop').addEventListener('click', e => {
@@ -4582,7 +4670,12 @@ $('#layoutPop').addEventListener('click', e => {
   prefs.layout.n = b.dataset.mcl; savePrefs(); mcApply(); buildLayoutPop();
   if (!mcWide() && b.dataset.mcl !== '1') toast('멀티 차트는 넓은 화면에서 보여요. 이 기기에서는 한 칸으로 보여요.');
 });
-$('#layoutPop').addEventListener('change', e => { const k = e.target.dataset.mcs; if (k) { prefs.layout[k] = e.target.checked; savePrefs(); } });
+$('#layoutPop').addEventListener('change', e => {
+  const k = e.target.dataset.mcs;
+  if (!k) return;
+  prefs.layout[k] = e.target.checked; savePrefs();
+  if (k === 'dom') { mcApply(); if (e.target.checked && MC_CELLS[prefs.layout.n] < 2) toast('차트 배치를 2칸 이상으로 고르면 마지막 칸에 테더 도미넌스가 보여요.'); }
+});
 window.addEventListener('resize', () => { if (!EMBED && MC.wide !== null && MC.wide !== mcWide()) mcApply(); });
 
 // 종목·시간 단위 맞추기: 바꾼 칸이 알리면 첫 칸이 나머지 칸에 전한다
@@ -4593,6 +4686,7 @@ function mcMoved(sid, iv) {
 }
 function mcSpread(from, sid, iv) {
   const L = prefs.layout;
+  if (L.syncIv && iv) for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, iv); // 도미넌스 칸도 같은 시간 단위로
   if (!L.syncSym && !L.syncIv) return;
   const msg = { bc: 'go', sym: L.syncSym ? sid : null, iv: L.syncIv ? iv : null };
   MC.frames.forEach((f, i) => { if (i + 1 !== from && f.contentWindow) f.contentWindow.postMessage(msg, mcOrigin); });
@@ -4664,7 +4758,7 @@ if (!EMBED) {
     if (sig === MC.look) return;
     MC.look = sig;
     clearTimeout(MC.lt);
-    MC.lt = setTimeout(() => MC.frames.forEach(f => f.contentWindow && f.contentWindow.postMessage({ bc: 'look' }, mcOrigin)), 400);
+    MC.lt = setTimeout(() => { MC.frames.forEach(f => f.contentWindow && f.contentWindow.postMessage({ bc: 'look' }, mcOrigin)); domRefresh(); }, 400);
   };
   mcApply();
 }
@@ -5640,7 +5734,7 @@ $$('.modal').forEach(m => m.addEventListener('pointerdown', e => { if (e.target 
 $('#toRT').addEventListener('click', () => chart.timeScale().scrollToRealTime());
 $('#retryBtn').addEventListener('click', () => load(prefs.sym, prefs.interval));
 document.addEventListener('keydown', e => {
-  const open = ['setDlg', 'syncDlg', 'chartDlg', 'alertDlg', 'indDlg', 'search'].find(id => !$('#' + id).hidden);
+  const open = ['setDlg', 'syncDlg', 'chartDlg', 'alertDlg', 'indDlg', 'search', 'domDlg'].find(id => !$('#' + id).hidden);
   if (open) { if (e.key === 'Escape') { e.preventDefault(); closeModal(open); } return; }
   const t = e.target, typing = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
   if (typing) return;

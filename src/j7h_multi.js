@@ -18,13 +18,22 @@ function mcApply() {
   const L = prefs.layout, n = mcWide() ? MC_CELLS[L.n] || 1 : 1, g = $('#mcGrid');
   MC.wide = mcWide();
   g.className = 'mc-grid' + (n > 1 ? ` mc-on l-${L.n}` : '');
-  while (MC.frames.length > n - 1) MC.frames.pop().remove();
-  for (let k = MC.frames.length + 1; k < n; k++) {
-    const f = document.createElement('iframe');
-    f.className = 'mc-cell'; f.title = `차트 ${k + 1}`;
-    f.src = `${location.pathname}?embed=1&slot=${k}&v=${encodeURIComponent(document.lastModified)}`; // 새로 배포하면 칸도 새 파일을 받게
+  const kind = k => L.dom && k === n - 1 ? 'dom' : 'app'; // 테더 도미넌스를 켜면 마지막 칸은 TradingView USDT.D
+  let keep = 0;
+  while (keep < MC.frames.length && keep < n - 1 && MC.frames[keep].dataset.kind === kind(keep + 1)) keep++;
+  while (MC.frames.length > keep) MC.frames.pop().remove();
+  for (let k = keep + 1; k < n; k++) {
+    let f;
+    if (kind(k) === 'dom') { f = document.createElement('div'); f.className = 'mc-cell dom-cell'; }
+    else {
+      f = document.createElement('iframe');
+      f.className = 'mc-cell'; f.title = `차트 ${k + 1}`;
+      f.src = `${location.pathname}?embed=1&slot=${k}&v=${encodeURIComponent(document.lastModified)}`; // 새로 배포하면 칸도 새 파일을 받게
+    }
+    f.dataset.kind = kind(k);
     g.append(f); MC.frames.push(f);
   }
+  for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, f.dataset.iv || spec.id);
   $('#layoutBtn').setAttribute('aria-pressed', String(n > 1));
   $('#layoutBtn').innerHTML = mcIcon(n > 1 ? L.n : '1');
 }
@@ -35,6 +44,7 @@ function buildLayoutPop() {
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncSym"${L.syncSym ? ' checked' : ''}><span>모든 칸 같은 종목<small>한 칸에서 종목을 바꾸면 다른 칸도 바뀌어요</small></span></label>`
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncIv"${L.syncIv ? ' checked' : ''}><span>모든 칸 같은 시간 단위</span></label>`
     + `<label class="cs-chk"><input type="checkbox" data-mcs="syncX"${L.syncX ? ' checked' : ''}><span>십자선 맞추기<small>마우스를 올린 칸과 같은 시각에 다른 칸도 세로 점선을 그려요</small></span></label>`
+    + `<label class="cs-chk"><input type="checkbox" data-mcs="dom"${L.dom ? ' checked' : ''}><span>마지막 칸에 테더 도미넌스<small>TradingView USDT.D 차트를 띄워요. 2칸 이상일 때 보여요</small></span></label>`
     + `<p class="pop-hint">${mcWide() ? '칸마다 종목·시간 단위·지표·작도 도구를 따로 써요. 왼쪽 위 칸이 오른쪽 시세 패널과 이어져 있어요.' : '멀티 차트는 가로 900px 이상인 넓은 화면에서 보여요. (휴대폰은 한 칸)'}</p>`;
 }
 $('#layoutPop').addEventListener('click', e => {
@@ -43,7 +53,12 @@ $('#layoutPop').addEventListener('click', e => {
   prefs.layout.n = b.dataset.mcl; savePrefs(); mcApply(); buildLayoutPop();
   if (!mcWide() && b.dataset.mcl !== '1') toast('멀티 차트는 넓은 화면에서 보여요. 이 기기에서는 한 칸으로 보여요.');
 });
-$('#layoutPop').addEventListener('change', e => { const k = e.target.dataset.mcs; if (k) { prefs.layout[k] = e.target.checked; savePrefs(); } });
+$('#layoutPop').addEventListener('change', e => {
+  const k = e.target.dataset.mcs;
+  if (!k) return;
+  prefs.layout[k] = e.target.checked; savePrefs();
+  if (k === 'dom') { mcApply(); if (e.target.checked && MC_CELLS[prefs.layout.n] < 2) toast('차트 배치를 2칸 이상으로 고르면 마지막 칸에 테더 도미넌스가 보여요.'); }
+});
 window.addEventListener('resize', () => { if (!EMBED && MC.wide !== null && MC.wide !== mcWide()) mcApply(); });
 
 // 종목·시간 단위 맞추기: 바꾼 칸이 알리면 첫 칸이 나머지 칸에 전한다
@@ -54,6 +69,7 @@ function mcMoved(sid, iv) {
 }
 function mcSpread(from, sid, iv) {
   const L = prefs.layout;
+  if (L.syncIv && iv) for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, iv); // 도미넌스 칸도 같은 시간 단위로
   if (!L.syncSym && !L.syncIv) return;
   const msg = { bc: 'go', sym: L.syncSym ? sid : null, iv: L.syncIv ? iv : null };
   MC.frames.forEach((f, i) => { if (i + 1 !== from && f.contentWindow) f.contentWindow.postMessage(msg, mcOrigin); });
@@ -125,7 +141,7 @@ if (!EMBED) {
     if (sig === MC.look) return;
     MC.look = sig;
     clearTimeout(MC.lt);
-    MC.lt = setTimeout(() => MC.frames.forEach(f => f.contentWindow && f.contentWindow.postMessage({ bc: 'look' }, mcOrigin)), 400);
+    MC.lt = setTimeout(() => { MC.frames.forEach(f => f.contentWindow && f.contentWindow.postMessage({ bc: 'look' }, mcOrigin)); domRefresh(); }, 400);
   };
   mcApply();
 }

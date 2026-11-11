@@ -251,6 +251,18 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 .band-tag{font-size:11px;font-weight:600;padding:0 5px;border-radius:3px;background:var(--raise);line-height:16px}
 .band-legend{position:absolute;left:10px;z-index:3;pointer-events:none;display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
 .band-legend b{font-weight:500;font-variant-numeric:tabular-nums}
+/* 테더 도미넌스 (TradingView 위젯) — 큰 창과 멀티 차트 칸 */
+#domDlg{padding:4vh 16px 16px}
+.dom-card{width:min(1280px,100%);height:min(88vh,1000px);max-height:none}
+.dom-sub{font-size:12px;font-weight:400;color:var(--muted);margin-left:6px}
+.dom-box,.dom-cell{position:relative;flex:1 1 auto;min-height:0}
+.dom-box{border-top:1px solid var(--line)}
+.dom-load{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;color:var(--muted);font-size:13px}
+.dom-box .tradingview-widget-container,.dom-cell .tradingview-widget-container{position:absolute;inset:0;z-index:1}
+.tradingview-widget-container__widget{width:100%;height:100%}
+.modal-foot a{color:var(--accent)}
+.embed #domBtn{display:none}
+@media (max-width:640px){#domDlg{padding:0}#domDlg .dom-card{width:100%;height:100%;border:0;border-radius:0}.dom-sub{display:none}}
 </style>
 <div class="app">
   <header class="topbar">
@@ -277,6 +289,10 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
     <button type="button" class="tb-btn" id="cmpBtn" title="다른 종목과 비교 — 다른 거래소 종목도 돼요 (퍼센트로 겹쳐 그림)">
       <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 13l4-4 3 2 6-6"/><path d="M2 15.5h14M11 5h4v4" opacity=".55"/></svg>
       <span>비교</span>
+    </button>
+    <button type="button" class="tb-btn" id="domBtn" title="테더 도미넌스 (USDT.D) — USDT 시가총액이 코인 전체 시가총액에서 차지하는 비율 · TradingView 차트">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 10A6.5 6.5 0 1 1 8 2.5"/><path d="M10.5 1.5a6 6 0 0 1 6 6h-6z"/></svg>
+      <span>USDT.D</span>
     </button>
     <span class="grow"></span>
     <button type="button" class="conn" id="conn" data-state="connecting" data-pop="latPop" aria-haspopup="true" aria-expanded="false" title="연결 상태와 지연 시간">
@@ -483,6 +499,16 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
       <button type="button" class="icon-btn" data-close="syncDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </div>
     <div class="sync-body" id="syncBody"></div>
+  </div>
+</div>
+<div class="modal top" id="domDlg" hidden>
+  <div class="modal-card dom-card" role="dialog" aria-modal="true" aria-labelledby="domTitle">
+    <div class="modal-head">
+      <h2 id="domTitle">테더 도미넌스 <small class="dom-sub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
+      <button type="button" class="icon-btn" data-close="domDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </div>
+    <div class="dom-box" id="domBox"></div>
+    <div class="modal-foot">차트 제공 <a href="https://www.tradingview.com/" target="_blank" rel="noopener nofollow">TradingView</a> · 차트 왼쪽 위 기호를 바꾸면 BTC.D 같은 다른 도미넌스도 볼 수 있어요</div>
   </div>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
