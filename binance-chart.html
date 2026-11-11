@@ -777,7 +777,7 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
     <div class="vtabs" id="vtabs"></div>
     <div class="search-box">
       <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M12 12l3.5 3.5"/></svg>
-      <input class="upper" id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="BTC, ETHUSDT, SOL, USDT.D…" aria-label="심볼 검색" role="combobox" aria-controls="searchList" aria-expanded="true" aria-autocomplete="list">
+      <input class="upper" id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="BTC, ETHUSDT, USDT.D, BTC.D…" aria-label="심볼 검색" role="combobox" aria-controls="searchList" aria-expanded="true" aria-autocomplete="list">
     </div>
     <div class="qtabs" id="qtabs" role="group" aria-label="견적 통화"></div>
     <ul class="s-list" id="searchList" role="listbox" aria-label="검색 결과"></ul>
@@ -852,7 +852,7 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 <div class="modal top" id="domDlg" hidden>
   <div class="modal-card dom-card" role="dialog" aria-modal="true" aria-labelledby="domTitle">
     <div class="modal-head">
-      <h2 id="domTitle">테더 도미넌스 <small class="dom-sub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
+      <h2 id="domTitle"><span id="domName">테더 도미넌스</span> <small class="dom-sub" id="domSub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
       <button type="button" class="icon-btn" data-close="domDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </div>
     <div class="dom-box" id="domBox"></div>
@@ -4563,11 +4563,16 @@ function addDrawAlert(d) { // 선택한 작도 선에 알림 걸기
   if (addAlert(a)) toast(`${DW_TOOLS[d.type].name}에 알림을 걸었어요. 가격이 선을 지나가면 알려 드려요 (봉마다 한 번). 상단 종 버튼에서 바꿀 수 있어요.`);
 }
 syncAlertBadge();
-// ───────── 테더 도미넌스 (USDT.D) ─────────
-// USDT 시가총액 ÷ 코인 전체 시가총액. 거래소가 주는 값이 아니고 무료 공개 API로는 과거 흐름을 받을 수 없어서
-// TradingView 무료 위젯(CRYPTOCAP:USDT.D)을 띄운다. 위쪽 USDT.D 버튼은 큰 창으로, 멀티 차트에서는 마지막 칸으로 띄울 수 있다.
+// ───────── 도미넌스 (USDT.D · BTC.D) ─────────
+// 코인 하나의 시가총액 ÷ 코인 전체 시가총액. 거래소가 주는 값이 아니고 무료 공개 API로는 과거 흐름을 받을 수 없어서
+// TradingView 무료 위젯(CRYPTOCAP:…)을 띄운다. 위쪽 USDT.D 버튼과 종목 검색은 큰 창으로, 멀티 차트에서는 마지막 칸(USDT.D)으로 띄울 수 있다.
 const TV_EMBED = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-const DOM_SYM = 'CRYPTOCAP:USDT.D';
+// 종목 검색에서 찾을 수 있는 도미넌스. hit(검색어) → 'top'(맨 위) · 'near'(첫 결과 바로 아래) · null
+// 검색어는 대문자에 점·공백을 지운 것 (BTC.D → BTCD). 바이낸스 선물 BTCDOMUSDT는 다른 지수라서 BTCDOM으로 찾으면 그쪽이 나오게 둔다
+const DOMS = {
+  'USDT.D': { name: '테더 도미넌스', coin: 'USDT', hit: q => q.startsWith('USDTD') || (q.length >= 4 && 'USDTD'.startsWith(q)) || /테더/.test(q) ? 'top' : null },
+  'BTC.D': { name: '비트코인 도미넌스', coin: 'BTC', hit: q => q === 'BTCD' || q.startsWith('BTCDOMI') || /비트/.test(q) ? 'top' : q === 'BTC' ? 'near' : null },
+};
 // 이 앱의 시간대는 고정 시차라서, 서머타임이 없는 도시를 골라 TradingView에 넘긴다
 const DOM_TZ = { utc: 'Etc/UTC', '+9': 'Asia/Seoul', '+8': 'Asia/Singapore', '+7': 'Asia/Bangkok', '+5.5': 'Asia/Kolkata', '+4': 'Asia/Dubai', '+3': 'Europe/Istanbul',
   '+2': 'Africa/Johannesburg', '+1': 'Africa/Lagos', '-3': 'America/Sao_Paulo', '-4': 'America/Caracas', '-5': 'America/Bogota', '-6': 'America/El_Salvador',
@@ -4582,12 +4587,12 @@ function domIv(id) {
   const min = sp.ms / 60000;
   return String([1, 3, 5, 15, 30, 60, 120, 180, 240].filter(m => m <= min).pop() || 1);
 }
-const domSig = id => [prefs.theme, prefs.tz, prefs.grid, domIv(id)].join('|');
-// box 안에 위젯을 만든다. 테마·시간대·시간 단위가 그대로면 다시 만들지 않는다 (위젯 안에서 바꾼 것이 유지되게)
-function domMount(box, id) {
-  const sig = domSig(id);
+const domSig = (id, sym) => [sym, prefs.theme, prefs.tz, prefs.grid, domIv(id)].join('|');
+// box 안에 위젯을 만든다. 기호·테마·시간대·시간 단위가 그대로면 다시 만들지 않는다 (위젯 안에서 바꾼 것이 유지되게)
+function domMount(box, id, sym = 'USDT.D') {
+  const sig = domSig(id, sym);
   if (box.dataset.sig === sig) return;
-  box.dataset.sig = sig; box.dataset.iv = id;
+  box.dataset.sig = sig; box.dataset.iv = id; box.dataset.sym = sym;
   box.textContent = '';
   const msg = document.createElement('p');
   msg.className = 'dom-load'; msg.textContent = 'TradingView 차트 불러오는 중…';
@@ -4596,7 +4601,7 @@ function domMount(box, id) {
   inner.className = 'tradingview-widget-container__widget';
   s.type = 'text/javascript'; s.src = TV_EMBED; s.async = true;
   s.textContent = JSON.stringify({
-    autosize: true, symbol: DOM_SYM, interval: domIv(id), timezone: domTz(), theme: prefs.theme === 'light' ? 'light' : 'dark', style: '1', locale: 'kr',
+    autosize: true, symbol: 'CRYPTOCAP:' + sym, interval: domIv(id), timezone: domTz(), theme: prefs.theme === 'light' ? 'light' : 'dark', style: '1', locale: 'kr',
     backgroundColor: C.bg, gridColor: prefs.grid ? C.grid : 'rgba(0,0,0,0)', hide_volume: true, allow_symbol_change: true, save_image: false, calendar: false,
     support_host: 'https://www.tradingview.com',
   });
@@ -4604,24 +4609,34 @@ function domMount(box, id) {
   w.append(inner, s);
   box.append(msg, w);
 }
-function openDom() {
+function openDom(sym = 'USDT.D') {
+  const d = DOMS[sym] || DOMS['USDT.D'];
   closePops();
+  $('#domName').textContent = d.name;
+  $('#domSub').textContent = `${sym} · ${d.coin} 시가총액 ÷ 코인 전체 시가총액`;
   $('#domDlg').hidden = false;
-  domMount($('#domBox'), spec.id);
+  domMount($('#domBox'), spec.id, sym);
 }
 // 테마·시간대가 바뀌면 열려 있는 위젯을 다시 만든다 (닫힌 창은 다음에 열 때)
 function domRefresh() {
   for (const f of MC.frames) if (f.dataset.kind === 'dom') domMount(f, f.dataset.iv || spec.id);
-  if (!$('#domDlg').hidden) domMount($('#domBox'), $('#domBox').dataset.iv || spec.id);
+  if (!$('#domDlg').hidden) domMount($('#domBox'), $('#domBox').dataset.iv || spec.id, $('#domBox').dataset.sym);
 }
-$('#domBtn').addEventListener('click', openDom);
-// 종목 검색에서도 찾을 수 있게: USDT.D(점은 지워서 USDTD)·USDT·도미넌스·테더로 찾으면 맨 위에 한 줄 보이고, 고르면 위 창이 열린다
-const DOM_SID = 'tv:USDT.D';
-const domHit = q => !!q && (q.startsWith('USDTD') || (q.length >= 4 && 'USDTD'.startsWith(q)) || q.startsWith('DOMIN') || /도미|테더/.test(q));
-const domRow = sel => `<li role="option" id="so0" class="s-row${sel ? ' sel' : ''}" data-s="${DOM_SID}" aria-selected="${sel}">
-    <span class="coin" style="--h:160">T</span>
-    <span class="s-name"><span><b>USDT.D</b><small> 테더 도미넌스</small></span><span class="s-sub">TradingView · USDT 시가총액 ÷ 코인 전체 시가총액</span></span>
+$('#domBtn').addEventListener('click', () => openDom('USDT.D'));
+// 종목 검색: 검색어에 맞는 도미넌스 [{ sym, at }]. 도미넌스·도미로 찾으면 전부 맨 위에
+function domHits(q) {
+  if (!q) return [];
+  const all = q.startsWith('DOMIN') || /도미/.test(q);
+  return Object.keys(DOMS).map(sym => ({ sym, at: all ? 'top' : DOMS[sym].hit(q) })).filter(x => x.at);
+}
+const domOfSid = sid => typeof sid === 'string' && sid.startsWith('tv:') && DOMS[sid.slice(3)] ? sid.slice(3) : null;
+function domRow(sym, i, sel) {
+  const d = DOMS[sym];
+  return `<li role="option" id="so${i}" class="s-row${sel ? ' sel' : ''}" data-s="tv:${sym}" aria-selected="${sel}">
+    <span class="coin" style="--h:${hue(d.coin)}">${d.coin[0]}</span>
+    <span class="s-name"><span><b>${sym}</b><small> ${d.name}</small></span><span class="s-sub">TradingView · ${d.coin} 시가총액 ÷ 코인 전체 시가총액</span></span>
     <span class="s-last muted">창으로 열기</span><span class="s-chg"></span></li>`;
+}
 
 // ───────── 멀티 차트 ─────────
 // 화면을 1~4칸으로 나눈다. 첫 칸은 이 페이지의 차트(오른쪽 시세 패널과 이어짐), 나머지 칸은 같은 앱을 작게 띄운 것.
@@ -5662,11 +5677,15 @@ function renderSearch() {
   }
   scored.sort((a, b) => a[0] - b[0] || b[1].usd - a[1].usd);
   searchItems = scored.slice(0, 80).map(x => x[1]); searchSel = 0;
-  const dom = domHit(q);
-  if (dom && searchMode === 'open') searchItems.unshift({ sid: DOM_SID, dom: true }); // 테더 도미넌스 (거래소 종목이 아님)
+  // 도미넌스 (거래소 종목이 아님): 'top'은 맨 위, 'near'는 첫 결과 바로 아래 (BTC를 치고 Enter하면 그대로 BTC 종목이 열리게)
+  const doms = domHits(q), domTop = doms.filter(x => x.at === 'top').map(x => x.sym);
+  if (searchMode === 'open') {
+    searchItems.splice(Math.min(1, searchItems.length), 0, ...doms.filter(x => x.at === 'near').map(x => ({ sid: 'tv:' + x.sym, dom: x.sym })));
+    searchItems.unshift(...domTop.map(sym => ({ sid: 'tv:' + sym, dom: sym })));
+  }
   const inWatch = new Set(prefs.watch), V = VENUES[searchVk];
-  const domNote = dom && searchMode !== 'open' ? '<li class="empty">테더 도미넌스(USDT.D)는 거래소 종목이 아니라서 관심 종목이나 비교에는 넣을 수 없어요. 위쪽 USDT.D 버튼으로 보세요.</li>' : '';
-  $('#searchList').innerHTML = domNote + searchItems.map((t, i) => t.dom ? domRow(i === 0) : `<li role="option" id="so${i}" class="s-row${i === 0 ? ' sel' : ''}" data-s="${esc(t.sid)}" aria-selected="${i === 0}">
+  const domNote = domTop.length && searchMode !== 'open' ? `<li class="empty">도미넌스(${domTop.join('·')})는 거래소 종목이 아니라서 관심 종목이나 비교에는 넣을 수 없어요. 종목 검색에서 고르면 창으로 열려요.</li>` : '';
+  $('#searchList').innerHTML = domNote + searchItems.map((t, i) => t.dom ? domRow(t.dom, i, i === 0) : `<li role="option" id="so${i}" class="s-row${i === 0 ? ' sel' : ''}" data-s="${esc(t.sid)}" aria-selected="${i === 0}">
     <span class="coin" style="--h:${hue(t.base)}">${esc(t.base.slice(0, 1))}</span>
     <span class="s-name"><span><b>${esc(t.base)}</b><small>/${esc(t.quote)}${V.mk === 'perp' ? ' 무기한' : ''}</small></span><span class="s-sub">${V.label}${searchMode === 'add' && inWatch.has(t.sid) ? ' · 관심 종목에 있음' : ''} · 거래대금 $${fvol(t.usd)}</span></span>
     <span class="s-last num">${fmt(t.last, autoPrec(t.last))}</span><span class="s-chg num ${t.pct >= 0 ? 'up' : 'down'}">${fpct(t.pct)}</span></li>`).join('')
@@ -5705,7 +5724,8 @@ function closeSearch() {
 function choose(sid) {
   const mode = searchMode;
   closeSearch();
-  if (sid === DOM_SID) { openDom(); return; }
+  const ds = domOfSid(sid);
+  if (ds) { openDom(ds); return; }
   const s = sidInfo(sid);
   if (!s) return;
   if (mode === 'cmp') return addCompare(sid);

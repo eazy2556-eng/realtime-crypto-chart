@@ -429,7 +429,7 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
     <div class="vtabs" id="vtabs"></div>
     <div class="search-box">
       <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M12 12l3.5 3.5"/></svg>
-      <input class="upper" id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="BTC, ETHUSDT, SOL, USDT.D…" aria-label="심볼 검색" role="combobox" aria-controls="searchList" aria-expanded="true" aria-autocomplete="list">
+      <input class="upper" id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="BTC, ETHUSDT, USDT.D, BTC.D…" aria-label="심볼 검색" role="combobox" aria-controls="searchList" aria-expanded="true" aria-autocomplete="list">
     </div>
     <div class="qtabs" id="qtabs" role="group" aria-label="견적 통화"></div>
     <ul class="s-list" id="searchList" role="listbox" aria-label="검색 결과"></ul>
@@ -504,7 +504,7 @@ html.embed,html.embed body{height:100%!important;overflow:hidden!important}
 <div class="modal top" id="domDlg" hidden>
   <div class="modal-card dom-card" role="dialog" aria-modal="true" aria-labelledby="domTitle">
     <div class="modal-head">
-      <h2 id="domTitle">테더 도미넌스 <small class="dom-sub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
+      <h2 id="domTitle"><span id="domName">테더 도미넌스</span> <small class="dom-sub" id="domSub">USDT.D · USDT 시가총액 ÷ 코인 전체 시가총액</small></h2>
       <button type="button" class="icon-btn" data-close="domDlg" aria-label="닫기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </div>
     <div class="dom-box" id="domBox"></div>
